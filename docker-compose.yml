@@ -1,0 +1,37 @@
+# ============================================================
+# Docker 管理中心 - 极空间 NAS 部署配置
+# 访问地址：http://极空间IP:9999
+# ============================================================
+
+services:
+  docker-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docker-manager:local
+    container_name: docker-manager
+    restart: unless-stopped
+
+    ports:
+      - "9999:8080"      # 左侧端口可改，右侧8080不要改
+
+    volumes:
+      # 挂载 Docker Socket，让前端代理和后端都能操作 Docker
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    environment:
+      - TZ=Asia/Shanghai
+      - BACKEND_PORT=8081
+
+    networks:
+      - docker-manager-net
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  docker-manager-net:
+    driver: bridge
