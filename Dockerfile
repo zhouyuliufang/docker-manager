@@ -1,24 +1,25 @@
 FROM python:3.11-alpine
 
-# 安装 Nginx 和 Docker CLI
-RUN apk add --no-cache nginx docker-cli docker-cli-compose curl
+# 安装 nginx、docker-compose、curl
+RUN apk add --no-cache nginx curl bash \
+    && pip install --no-cache-dir requests
 
-# 复制前端文件
-COPY index.html /usr/share/nginx/html/index.html
+# 安装 docker CLI 和 compose 插件
+RUN apk add --no-cache docker-cli docker-cli-compose
+
+# 创建数据目录
+RUN mkdir -p /data /var/log/nginx /run/nginx
 
 # 复制配置文件
 COPY nginx.conf /etc/nginx/nginx.conf
-
-# 复制后端服务
+COPY index.html /usr/share/nginx/html/index.html
 COPY backend.py /app/backend.py
-
-# 创建 nginx 运行目录
-RUN mkdir -p /run/nginx
-
-# 启动脚本：同时运行 Python 后端 + Nginx
 COPY entrypoint.sh /entrypoint.sh
+
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 8080
+WORKDIR /app
+
+EXPOSE 80
 
 CMD ["/entrypoint.sh"]
