@@ -193,6 +193,12 @@ textarea.input{resize:vertical;min-height:80px}
 .mirror-item:last-child{border-bottom:none}
 .mirror-url{flex:1;font-family:monospace;font-size:13px}
 
+/* ═══════════════ 镜像更新 ═══════════════ */
+.badge-orange{background:#3a2000;color:#f0883e}
+.img-update-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--yellow);margin-right:4px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.update-log-box{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'Courier New',monospace;font-size:12px;line-height:1.7;height:280px;overflow-y:auto;color:#c9d1d9}
+
 /* ═══════════════ 搜索栏 ═══════════════ */
 .search-bar{display:flex;gap:8px;margin-bottom:16px;align-items:center}
 .search-input{flex:1}
@@ -276,6 +282,7 @@ textarea.input{resize:vertical;min-height:80px}
           <option value="exited">已停止</option>
         </select>
         <button class="btn btn-ghost" onclick="loadContainers()">🔄 刷新</button>
+        <button class="btn btn-ghost" id="check-all-btn" onclick="checkAllImageUpdates()" title="检查所有容器镜像是否有更新">🔍 检查所有镜像更新</button>
       </div>
       <div class="card" style="padding:0;overflow:hidden">
         <div style="overflow-x:auto">
@@ -286,11 +293,12 @@ textarea.input{resize:vertical;min-height:80px}
                 <th>镜像</th>
                 <th>状态</th>
                 <th>端口</th>
+                <th>镜像更新</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody id="container-tbody">
-              <tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px">加载中...</td></tr>
+              <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px">加载中...</td></tr>
             </tbody>
           </table>
         </div>
@@ -397,25 +405,41 @@ services:
       <div class="card" id="history-list"><div style="color:var(--text2);font-size:13px">暂无记录</div></div>
     </div>
 
-    <!-- ── 镜像管理（Task 2）── -->
+    <!-- ── 镜像管理 ── -->
     <div id="panel-images" class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
         <div style="font-size:15px;font-weight:600">🖼️ 本地镜像管理</div>
-        <button class="btn btn-ghost btn-sm" onclick="loadImages()">🔄 刷新</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="loadImages()">🔄 刷新列表</button>
+          <button class="btn btn-ghost btn-sm" id="scan-all-btn" onclick="scanAllImageUpdates()">🔍 全量检查更新</button>
+          <button class="btn btn-success btn-sm" id="update-all-btn" style="display:none" onclick="updateAllOutdated()">⬆️ 一键更新全部</button>
+        </div>
       </div>
-      <div class="card">
-        <table class="container-table">
-          <thead>
-            <tr>
-              <th>镜像名称</th>
-              <th>镜像ID</th>
-              <th>大小</th>
-              <th>创建时间</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="images-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px">加载中...</td></tbody>
-        </table>
+      <!-- 扫描进度提示 -->
+      <div id="scan-progress-bar" style="display:none;margin-bottom:12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px" id="scan-progress-text">正在检查...</div>
+        <div class="progress-bar" style="height:6px">
+          <div class="progress-fill blue" id="scan-progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="container-table">
+            <thead>
+              <tr>
+                <th>镜像名称</th>
+                <th>镜像ID</th>
+                <th>大小</th>
+                <th>创建时间</th>
+                <th>更新状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="images-tbody">
+              <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px">加载中...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -528,6 +552,26 @@ services:
   </div>
 </div>
 
+<!-- ══════════════════════ Modal：镜像更新 ══════════════════════ -->
+<div class="modal-overlay" id="update-modal">
+  <div class="modal" style="width:640px">
+    <div class="modal-title">⬆️ <span id="update-modal-title">更新镜像</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div id="update-phase-badge" class="phase-badge badge-blue">准备中</div>
+      <div style="flex:1">
+        <div class="progress-bar" style="height:8px">
+          <div class="progress-fill blue" id="update-progress-fill" style="width:0%;transition:width .4s"></div>
+        </div>
+      </div>
+    </div>
+    <div class="update-log-box" id="update-log-box"></div>
+    <div id="update-result-card" style="display:none;margin-top:10px;padding:12px;border-radius:8px;font-size:13px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="update-close-btn" onclick="closeUpdateModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast 容器 -->
 <div id="toast-container"></div>
 
@@ -547,6 +591,8 @@ let logFollowing = true;
 let statsTimer = null;
 let deployTaskId = '';
 let deployEventSource = null;
+// 镜像更新状态缓存: { 'image:tag': { has_update, message, checked } }
+let imageUpdateCache = {};
 
 // ══════════════════════════════════════════════════════
 //  工具函数
@@ -811,7 +857,7 @@ function filterContainers() {
 function renderContainers(list) {
   const tbody = document.getElementById('container-tbody');
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px">暂无容器</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px">暂无容器</td></tr>';
     return;
   }
   tbody.innerHTML = list.map(c => {
@@ -822,11 +868,33 @@ function renderContainers(list) {
       : `<span class="badge badge-gray">● ${c.State}</span>`;
     const ports = (c.Ports || []).filter(p => p.PublicPort)
       .map(p => `${p.PublicPort}:${p.PrivatePort}`).join(', ') || '-';
+
+    // 镜像更新状态
+    const imgKey = c.Image;
+    const cache = imageUpdateCache[imgKey];
+    let updateCell = '';
+    if (!cache) {
+      updateCell = `<button class="btn btn-ghost btn-sm" onclick="checkOneContainerImage('${imgKey.replace(/'/g,"\\'")}')">🔍 检查</button>`;
+    } else if (cache.checking) {
+      updateCell = `<span style="color:var(--text2);font-size:12px">检查中...</span>`;
+    } else if (cache.has_update === true) {
+      updateCell = `<span class="badge badge-orange"><span class="img-update-dot"></span>有更新</span>
+        <button class="btn btn-sm" style="background:var(--yellow);color:#000;margin-left:4px" onclick="doUpdateImage('${imgKey.replace(/'/g,"\\'")}', true)">⬆️ 更新</button>`;
+    } else if (cache.has_update === null) {
+      updateCell = `<span class="badge badge-yellow" title="${cache.message}">可能有更新</span>
+        <button class="btn btn-sm" style="background:var(--yellow);color:#000;margin-left:4px" onclick="doUpdateImage('${imgKey.replace(/'/g,"\\'")}', true)">⬆️ 更新</button>`;
+    } else if (cache.has_update === false) {
+      updateCell = `<span class="badge badge-green">✓ 最新</span>`;
+    } else if (cache.error) {
+      updateCell = `<span class="badge badge-gray" title="${cache.error}">检查失败</span>`;
+    }
+
     return `<tr>
       <td><div class="container-name">${name}</div><div class="container-img">${c.Id.slice(0,12)}</div></td>
-      <td style="font-family:monospace;font-size:12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.Image}</td>
+      <td style="font-family:monospace;font-size:12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.Image}">${c.Image}</td>
       <td>${statusBadge}</td>
       <td style="font-family:monospace;font-size:12px">${ports}</td>
+      <td style="min-width:130px">${updateCell}</td>
       <td><div class="action-group">
         ${isRunning ? `<button class="btn btn-ghost btn-sm" onclick="containerAction('${c.Id}','stop','${name}')">⏹</button>
                        <button class="btn btn-ghost btn-sm" onclick="containerAction('${c.Id}','restart','${name}')">🔄</button>`
@@ -836,6 +904,44 @@ function renderContainers(list) {
       </div></td>
     </tr>`;
   }).join('');
+}
+
+// 检查单个容器镜像更新
+async function checkOneContainerImage(imgName) {
+  imageUpdateCache[imgName] = { checking: true };
+  filterContainers(); // 立即重渲染显示「检查中」
+  const result = await api('POST', '/api/images/check-update', { name: imgName });
+  imageUpdateCache[imgName] = result;
+  filterContainers(); // 更新显示结果
+}
+
+// 检查所有容器镜像更新
+async function checkAllImageUpdates() {
+  const btn = document.getElementById('check-all-btn');
+  btn.disabled = true;
+  btn.textContent = '检查中...';
+  // 去重镜像列表
+  const images = [...new Set(allContainers.map(c => c.Image))];
+  for (let i = 0; i < images.length; i++) {
+    imageUpdateCache[images[i]] = { checking: true };
+    filterContainers();
+    const result = await api('POST', '/api/images/check-update', { name: images[i] });
+    imageUpdateCache[images[i]] = result;
+    filterContainers();
+    btn.textContent = `检查中 ${i+1}/${images.length}...`;
+  }
+  btn.disabled = false;
+  btn.textContent = '🔍 检查所有镜像更新';
+  // 统计有更新的
+  const updatable = images.filter(img => {
+    const c = imageUpdateCache[img];
+    return c && (c.has_update === true || c.has_update === null);
+  });
+  if (updatable.length > 0) {
+    toast(`发现 ${updatable.length} 个镜像可更新`, 'info');
+  } else {
+    toast('所有镜像均已是最新版本', 'success');
+  }
 }
 
 async function containerAction(cid, action, name) {
@@ -1262,49 +1368,216 @@ async function loadHistory() {
 }
 
 // ══════════════════════════════════════════════════════
-//  镜像管理（Task 2）
+//  镜像管理
 // ══════════════════════════════════════════════════════
+let allImages = [];  // { name, id, size, created, updateStatus }
+
 async function loadImages() {
   try {
-    const images = await api('GET', '/api/images');
-    const tbody = document.getElementById('images-tbody');
-    if (!images.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text2);padding:24px">暂无镜像</td></tr>';
-      return;
-    }
-    tbody.innerHTML = images.map(img => `
-      <tr>
-        <td style="font-family:monospace;font-size:13px;max-width:300px;overflow:hidden;text-overflow:ellipsis" title="${img.name}">${img.name}</td>
-        <td style="font-family:monospace;font-size:12px">${img.id}</td>
-        <td style="font-size:12px">${img.size}</td>
-        <td style="font-size:12px">${img.created}</td>
-        <td><button class="btn btn-ghost btn-sm" onclick="checkImageUpdate('${img.name.replace(/'/g, "\\'")}')">检查更新</button></td>
-      </tr>
-    `).join('');
+    allImages = await api('GET', '/api/images');
+    // 保留已有检查结果
+    allImages.forEach(img => {
+      if (imageUpdateCache[img.name]) {
+        img.updateStatus = imageUpdateCache[img.name];
+      }
+    });
+    renderImages();
   } catch(e) {
     toast('加载镜像失败', 'error');
   }
 }
 
-async function checkImageUpdate(name) {
-  const btn = event.target;
-  btn.textContent = '检查中...';
+function renderImages() {
+  const tbody = document.getElementById('images-tbody');
+  if (!allImages.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px">暂无镜像</td></tr>';
+    document.getElementById('update-all-btn').style.display = 'none';
+    return;
+  }
+
+  // 统计可更新数量
+  const updatable = allImages.filter(img => {
+    const s = imageUpdateCache[img.name];
+    return s && (s.has_update === true || s.has_update === null);
+  });
+  document.getElementById('update-all-btn').style.display = updatable.length > 0 ? 'inline-flex' : 'none';
+  if (updatable.length > 0) {
+    document.getElementById('update-all-btn').textContent = `⬆️ 一键更新全部 (${updatable.length})`;
+  }
+
+  tbody.innerHTML = allImages.map(img => {
+    const cache = imageUpdateCache[img.name];
+    let statusCell = '';
+    if (!cache) {
+      statusCell = `<span style="color:var(--text2);font-size:12px">—</span>`;
+    } else if (cache.checking) {
+      statusCell = `<span style="color:var(--text2);font-size:12px">⏳ 检查中...</span>`;
+    } else if (cache.has_update === true) {
+      statusCell = `<span class="badge badge-orange"><span class="img-update-dot"></span>有更新</span>`;
+    } else if (cache.has_update === null) {
+      statusCell = `<span class="badge badge-yellow" title="${cache.message}">可能有更新</span>`;
+    } else if (cache.has_update === false) {
+      statusCell = `<span class="badge badge-green">✓ 最新</span>`;
+    } else if (cache.error) {
+      statusCell = `<span class="badge badge-gray" title="${cache.error}">检查失败</span>`;
+    }
+
+    const canUpdate = cache && (cache.has_update === true || cache.has_update === null);
+    const updateBtn = canUpdate
+      ? `<button class="btn btn-sm btn-sm" style="background:var(--yellow);color:#000" onclick="doUpdateImage('${img.name.replace(/'/g,"\\'")}', false)">⬆️ 更新</button>`
+      : `<button class="btn btn-ghost btn-sm" onclick="checkSingleImageUpdate('${img.name.replace(/'/g,"\\'")}')">🔍 检查</button>`;
+
+    return `<tr id="img-row-${img.id}">
+      <td style="font-family:monospace;font-size:13px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${img.name}">${img.name}</td>
+      <td style="font-family:monospace;font-size:12px">${img.id}</td>
+      <td style="font-size:12px">${img.size}</td>
+      <td style="font-size:12px">${img.created}</td>
+      <td style="min-width:120px">${statusCell}</td>
+      <td><div class="action-group">${updateBtn}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+// 检查单个镜像更新（镜像管理页）
+async function checkSingleImageUpdate(name) {
+  imageUpdateCache[name] = { checking: true };
+  renderImages();
+  const result = await api('POST', '/api/images/check-update', { name });
+  imageUpdateCache[name] = result;
+  renderImages();
+  if (result.has_update === true) {
+    toast(`${name} 发现新版本！`, 'info');
+  } else if (result.has_update === false) {
+    toast(`${name} 已是最新`, 'success');
+  }
+}
+
+// 全量检查更新（镜像管理页）
+async function scanAllImageUpdates() {
+  const btn = document.getElementById('scan-all-btn');
   btn.disabled = true;
+  const progressBar = document.getElementById('scan-progress-bar');
+  const progressText = document.getElementById('scan-progress-text');
+  const progressFill = document.getElementById('scan-progress-fill');
+  progressBar.style.display = 'block';
+
+  const images = allImages;
+  for (let i = 0; i < images.length; i++) {
+    const img = images[i];
+    imageUpdateCache[img.name] = { checking: true };
+    renderImages();
+    progressText.textContent = `正在检查 ${i+1}/${images.length}：${img.name}`;
+    progressFill.style.width = `${Math.round((i / images.length) * 100)}%`;
+    const result = await api('POST', '/api/images/check-update', { name: img.name });
+    imageUpdateCache[img.name] = result;
+    renderImages();
+  }
+  progressFill.style.width = '100%';
+  progressText.textContent = '检查完成';
+  setTimeout(() => { progressBar.style.display = 'none'; }, 2000);
+
+  btn.disabled = false;
+  const updatable = allImages.filter(img => {
+    const s = imageUpdateCache[img.name];
+    return s && (s.has_update === true || s.has_update === null);
+  });
+  if (updatable.length > 0) {
+    toast(`发现 ${updatable.length} 个镜像可更新`, 'info');
+  } else {
+    toast('所有镜像均已是最新版本', 'success');
+  }
+}
+
+// 一键更新所有有更新的镜像
+async function updateAllOutdated() {
+  const updatable = allImages.filter(img => {
+    const s = imageUpdateCache[img.name];
+    return s && (s.has_update === true || s.has_update === null);
+  });
+  if (!updatable.length) { toast('暂无需要更新的镜像', 'info'); return; }
+  if (!confirm(`确定更新以下 ${updatable.length} 个镜像并重启相关容器？\n${updatable.map(i=>i.name).join('\n')}`)) return;
+  for (const img of updatable) {
+    await doUpdateImage(img.name, true, true); // silent=true 不弹 modal
+  }
+  toast('全部更新完成', 'success');
+  loadImages();
+}
+
+// ── 更新单个镜像（带进度 Modal）
+async function doUpdateImage(imageName, restartContainers = true, silent = false) {
+  if (!silent) {
+    // 弹出进度 modal
+    document.getElementById('update-modal-title').textContent = `更新镜像：${imageName}`;
+    document.getElementById('update-log-box').innerHTML = '';
+    document.getElementById('update-result-card').style.display = 'none';
+    document.getElementById('update-phase-badge').textContent = '拉取中...';
+    document.getElementById('update-phase-badge').className = 'phase-badge badge-blue';
+    document.getElementById('update-progress-fill').style.width = '30%';
+    document.getElementById('update-modal').classList.add('show');
+  }
+
+  appendUpdateLog(`▶ 开始拉取：${imageName}`);
+  appendUpdateLog('  连接远端仓库...');
+
+  const endpoint = restartContainers ? '/api/images/pull-restart' : '/api/images/pull';
   try {
-    const result = await api('POST', '/api/images/check-update', { name });
-    if (result.has_update) {
-      toast(`🎉 ${name} 有新版本！${result.message}`, 'success');
-    } else if (result.error) {
-      toast(`检查失败：${result.error}`, 'error');
+    const result = await api('POST', endpoint, { name: imageName });
+    if (!silent) {
+      document.getElementById('update-progress-fill').style.width = '100%';
+      appendUpdateLog('\n' + (result.output || ''));
+    }
+    if (result.ok) {
+      imageUpdateCache[imageName] = { has_update: false, message: '已更新至最新' };
+      if (!silent) {
+        const badge = document.getElementById('update-phase-badge');
+        badge.textContent = '✅ 更新成功';
+        badge.className = 'phase-badge badge-green';
+        const restarted = result.restarted || [];
+        const resultCard = document.getElementById('update-result-card');
+        resultCard.style.display = 'block';
+        resultCard.style.background = '#0a2318';
+        resultCard.style.border = '1px solid var(--green)';
+        resultCard.style.color = 'var(--green)';
+        resultCard.innerHTML = `<b>✅ 镜像更新成功</b><br>
+          ${restarted.length ? `已重启容器：${restarted.join(', ')}` : '（未找到使用此镜像的运行容器）'}`;
+        toast(`${imageName} 更新成功`, 'success');
+      }
+      // 刷新列表
+      filterContainers();
+      if (currentTab === 'images') renderImages();
     } else {
-      toast(`${name} ${result.message}`, 'info');
+      if (!silent) {
+        const badge = document.getElementById('update-phase-badge');
+        badge.textContent = '❌ 更新失败';
+        badge.className = 'phase-badge badge-red';
+        const resultCard = document.getElementById('update-result-card');
+        resultCard.style.display = 'block';
+        resultCard.style.background = '#1a0a0a';
+        resultCard.style.border = '1px solid var(--red)';
+        resultCard.style.color = 'var(--red)';
+        resultCard.innerHTML = `<b>❌ 更新失败</b><br>${result.output || '未知错误'}`;
+        toast(`${imageName} 更新失败`, 'error');
+      }
     }
   } catch(e) {
-    toast('检查失败', 'error');
-  } finally {
-    btn.textContent = '检查更新';
-    btn.disabled = false;
+    if (!silent) {
+      appendUpdateLog('❌ 网络错误：' + e.message);
+      toast('更新失败：' + e.message, 'error');
+    }
   }
+}
+
+function appendUpdateLog(msg) {
+  const box = document.getElementById('update-log-box');
+  if (!box) return;
+  const line = document.createElement('div');
+  line.textContent = msg;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function closeUpdateModal() {
+  document.getElementById('update-modal').classList.remove('show');
 }
 
 // ══════════════════════════════════════════════════════
