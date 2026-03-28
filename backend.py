@@ -348,47 +348,138 @@ def get_images() -> list:
         return []
 
 import urllib.request, urllib.error
+from datetime import datetime, timezone
+
+def _get_local_image_digest(name: str) -> str:
+    """获取本地镜像的 RepoDigest（即拉取时记录的远端 digest）"""
+    try:
+        r = subprocess.run(
+            ["docker", "inspect", "--format", "{{index .RepoDigests 0}}", name],
+            capture_output=True, text=True, timeout=10
+        )
+        digest = r.stdout.strip()
+        # 格式: image@sha256:xxxxx  → 取 sha256:xxx 部分
+        if "@" in digest:
+            return digest.split("@", 1)[1]
+        return ""
+    except Exception:
+        return ""
+
+def _get_remote_image_digest(namespace: str, image_name: str, tag: str) -> str:
+    """通过 Docker Hub API 获取远端镜像最新 digest"""
+    try:
+        # 先取 token
+        auth_url = (
+            f"https://auth.docker.io/token?service=registry.docker.io"
+            f"&scope=repository:{namespace}/{image_name}:pull"
+        )
+        with urllib.request.urlopen(auth_url, timeout=10) as resp:
+            token = json.loads(resp.read().decode()).get("token", "")
+        if not token:
+            return ""
+        # 取 manifest
+        manifest_url = f"https://registry.hub.docker.com/v2/{namespace}/{image_name}/manifests/{tag}"
+        req = urllib.request.Request(manifest_url, headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.docker.distribution.manifest.v2+json"
+        })
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return resp.headers.get("Docker-Content-Digest", "")
+    except Exception:
+        return ""
 
 def check_image_update(name: str) -> dict:
-    """检查镜像是否有更新，调用 Docker Hub API"""
+    """检查镜像是否有更新：对比本地 digest vs 远端 digest"""
     try:
         # 解析镜像名: namespace/image:tag 或 image:tag
         if ":" in name:
             image_full, tag = name.rsplit(":", 1)
         else:
             image_full, tag = name, "latest"
-        
+
         # 处理 namespace
         if "/" in image_full:
             namespace, image_name = image_full.rsplit("/", 1)
         else:
             namespace, image_name = "library", image_full
-        
-        # Docker Hub API
-        url = f"https://registry.hub.docker.com/v2/repositories/{namespace}/{image_name}/tags/?page_size=100"
-        with urllib.request.urlopen(url, timeout=10) as resp:
-            data = json.loads(resp.read().decode())
-        
-        # 查找对应 tag 的 last_updated
-        for result in data.get("results", []):
-            if result.get("name") == tag:
-                last_updated = result.get("last_updated", "")
-                # 计算距今时间
-                if last_updated:
-                    from datetime import datetime, timezone
-                    updated_dt = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
-                    now = datetime.now(timezone.utc)
-                    days = (now - updated_dt).days
-                    return {
-                        "has_update": days < 30,  # 30 天内有更新就算有新版本
-                        "last_updated": last_updated,
-                        "days_ago": days,
-                        "message": f"镜像 {name} 最新版本发布于 {days} 天前"
-                    }
-        
-        return {"has_update": False, "message": "未找到该标签的信息"}
+
+        # 非 Docker Hub 镜像（含域名前缀）直接走 Hub API 查时间
+        is_hub = ("." not in namespace)
+
+        # 1. 获取本地 digest
+        local_digest = _get_local_image_digest(name)
+
+        # 2. 获取远端 digest（仅 Docker Hub）
+        remote_digest = ""
+        if is_hub:
+            remote_digest = _get_remote_image_digest(namespace, image_name, tag)
+
+        # 3. 如果拿到了两个 digest，直接对比
+        if local_digest and remote_digest:
+            has_update = (local_digest != remote_digest)
+            return {
+                "has_update": has_update,
+                "local_digest":  local_digest[:19] + "…",
+                "remote_digest": remote_digest[:19] + "…",
+                "message": ("发现新版本可更新！" if has_update else "已是最新版本"),
+            }
+
+        # 4. fallback：Docker Hub API 查 last_updated
+        if is_hub:
+            url = (
+                f"https://registry.hub.docker.com/v2/repositories"
+                f"/{namespace}/{image_name}/tags/?page_size=100"
+            )
+            with urllib.request.urlopen(url, timeout=10) as resp:
+                data = json.loads(resp.read().decode())
+            for result in data.get("results", []):
+                if result.get("name") == tag:
+                    last_updated = result.get("last_updated", "")
+                    if last_updated:
+                        updated_dt = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
+                        now = datetime.now(timezone.utc)
+                        days = (now - updated_dt).days
+                        # 本地没有 digest 时无法精确判断，仅提示时间
+                        return {
+                            "has_update": None,   # 未知，让前端显示「可能有更新」
+                            "last_updated": last_updated,
+                            "days_ago": days,
+                            "message": f"Hub 最新版发布于 {days} 天前，建议手动确认",
+                        }
+
+        return {"has_update": False, "message": "无法获取远端信息"}
     except Exception as e:
         return {"has_update": False, "error": str(e), "message": "检查失败"}
+
+
+# ── 拉取镜像更新 + 重启容器 ──────────────────────────────────────────
+def pull_and_restart(image_name: str) -> dict:
+    """docker pull 拉取最新镜像，返回结果；调用方决定是否重启容器"""
+    try:
+        r = subprocess.run(
+            ["docker", "pull", image_name],
+            capture_output=True, text=True, timeout=300
+        )
+        output = (r.stdout + r.stderr).strip()
+        ok = r.returncode == 0
+        return {"ok": ok, "output": output}
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "output": "拉取超时（300s）"}
+    except Exception as e:
+        return {"ok": False, "output": str(e)}
+
+
+def get_containers_by_image(image_name: str) -> list:
+    """找出所有使用指定镜像的容器 ID"""
+    try:
+        r = subprocess.run(
+            ["docker", "ps", "-a", "--filter", f"ancestor={image_name}",
+             "--format", "{{.ID}}"],
+            capture_output=True, text=True, timeout=10
+        )
+        return [line.strip() for line in r.stdout.strip().splitlines() if line.strip()]
+    except Exception:
+        return []
 
 # ──────────────────────────── 资源监控（P1-2）────────────────────────────
 def get_stats() -> dict:
@@ -1175,12 +1266,46 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._send_json({"ok": False, "error": str(e)})
 
-        # ── 镜像更新检查（Task 2）
+        # ── 镜像更新检查
         if path == "/api/images/check-update":
             name = body.get("name", "")
             if not name:
                 return self._send_json({"error": "name required"}, 400)
             return self._send_json(check_image_update(name))
+
+        # ── 拉取最新镜像（不重启容器）
+        if path == "/api/images/pull":
+            name = body.get("name", "")
+            if not name:
+                return self._send_json({"error": "name required"}, 400)
+            result = pull_and_restart(name)
+            return self._send_json(result)
+
+        # ── 拉取最新镜像 + 重启所有使用该镜像的容器
+        if path == "/api/images/pull-restart":
+            name = body.get("name", "")
+            if not name:
+                return self._send_json({"error": "name required"}, 400)
+            pull_result = pull_and_restart(name)
+            if not pull_result["ok"]:
+                return self._send_json(pull_result)
+            # 重启使用此镜像的容器
+            cids = get_containers_by_image(name)
+            restarted = []
+            failed = []
+            for cid in cids:
+                ok, msg = docker_action(cid, "restart")
+                if ok:
+                    restarted.append(cid[:12])
+                else:
+                    failed.append(cid[:12])
+            return self._send_json({
+                "ok": True,
+                "output": pull_result["output"],
+                "restarted": restarted,
+                "failed": failed,
+                "message": f"镜像已更新，重启了 {len(restarted)} 个容器"
+            })
 
         # ── 保存 Compose 文件（P2-4）
         if path == "/api/composes":
