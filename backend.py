@@ -1307,6 +1307,110 @@ class Handler(BaseHTTPRequestHandler):
                 "message": f"镜像已更新，重启了 {len(restarted)} 个容器"
             })
 
+        # ── 删除镜像（新增）
+        if path.startswith("/api/images/") and path.endswith("/delete"):
+            # 路径格式: /api/images/{image_id_short}/delete
+            parts = path.split("/")
+            if len(parts) >= 4:
+                image_id = parts[3]
+                # 查找完整镜像 ID
+                try:
+                    all_imgs = get_images()
+                    full_img = next((img for img in all_imgs if img["Id"] and (img["Id"] == image_id or img["Id"][:12] == image_id or img["Id"][7:19] == image_id)), None)
+                    if full_img:
+                        # 检查是否有容器正在使用此镜像
+                        containers = get_all_containers()
+                        using_containers = [c for c in containers if c.get("Image") == full_img.get("RepoTags", [""])[0] or c.get("ImageID") == full_img["Id"]]
+                        if using_containers:
+                            return self._send_json({
+                                "ok": False,
+                                "error": f"有 {len(using_containers)} 个容器正在使用此镜像，请先停止并删除"
+                            }, 400)
+                        
+                        # 执行删除
+                        r = subprocess.run(
+                            ["docker", "rmi", full_img["Id"]],
+                            capture_output=True, text=True, timeout=60
+                        )
+                        if r.returncode == 0:
+                            return self._send_json({"ok": True, "message": "镜像已删除"})
+                        else:
+                            return self._send_json({"ok": False, "error": r.stderr or "删除失败"}, 500)
+                    else:
+                        return self._send_json({"error": "镜像不存在"}, 404)
+                except Exception as e:
+                    return self._send_json({"error": str(e)}, 500)
+            return self._send_json({"error": "invalid request"}, 400)
+
+        # ── Web 终端：在容器中执行命令（新增）
+        if path.startswith("/api/terminal/exec/"):
+            # 路径格式: /api/terminal/exec/{container_id}
+            cid = path.split("/")[-1]
+            cmd = body.get("cmd", "").strip()
+            if not cmd:
+                return self._send_json({"error": "cmd required"}, 400)
+            if not cid:
+                return self._send_json({"error": "container id required"}, 400)
+            try:
+                # 检查容器是否存在
+                containers = get_all_containers()
+                container = next((c for c in containers if c["id"] == cid or c["id"][:12] == cid), None)
+                if not container:
+                    return self._send_json({"error": "container not found"}, 404)
+                
+                # 执行命令
+                result = subprocess.run(
+                    ["docker", "exec", cid, "sh", "-c", cmd],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                return self._send_json({
+                    "ok": True,
+                    "stdout": result.stdout,
+                    "stderr": result.stderr,
+                    "exit_code": result.returncode
+                })
+            except subprocess.TimeoutExpired:
+                return self._send_json({"error": "command timeout (30s)"}, 408)
+            except Exception as e:
+                return self._send_json({"error": str(e)}, 500)
+
+        # ── Web 终端：获取容器 shell 信息（新增）
+        if path.startswith("/api/terminal/shell/"):
+            cid = path.split("/")[-1]
+            if not cid:
+                return self._send_json({"error": "container id required"}, 400)
+            try:
+                containers = get_all_containers()
+                container = next((c for c in containers if c["id"] == cid or c["id"][:12] == cid), None)
+                if not container:
+                    return self._send_json({"error": "container not found"}, 404)
+                
+                # 检查可用的 shell
+                shells = ["bash", "sh", "/bin/bash", "/bin/sh"]
+                available_shell = None
+                for shell in shells:
+                    r = subprocess.run(
+                        ["docker", "exec", cid, "sh", "-c", f"command -v {shell}"],
+                        capture_output=True, timeout=5
+                    )
+                    if r.returncode == 0:
+                        available_shell = shell
+                        break
+                
+                if not available_shell:
+                    available_shell = "sh"
+                
+                return self._send_json({
+                    "ok": True,
+                    "shell": available_shell,
+                    "container_id": cid[:12],
+                    "container_name": container.get("name", "")
+                })
+            except Exception as e:
+                return self._send_json({"error": str(e)}, 500)
+
         # ── 保存 Compose 文件（P2-4）
         if path == "/api/composes":
             name    = body.get("name", "").strip()
