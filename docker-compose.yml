@@ -13,6 +13,8 @@ services:
       - /etc/docker:/etc/docker
       # ★ P0-1 数据目录挂载：密码、历史记录、保存的compose 持久化存储
       - /tmp/zfsv3/nvme19/13983418126/data/Docker/docker-manager/data:/data
+      # 前端界面挂载（热更新）
+      - ./index.html:/usr/share/nginx/html/index.html:ro
     restart: unless-stopped
     environment:
       - TZ=Asia/Shanghai
