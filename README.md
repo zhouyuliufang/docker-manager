@@ -2,7 +2,7 @@
 
 > 一个轻量级、单文件架构的 Docker 可视化管理工具，专为家用 NAS / 私有服务器设计。
 
-[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/zhouyuliufang/docker-manager)
+[![Version](https://img.shields.io/badge/version-3.2.1-blue.svg)](https://github.com/zhouyuliufang/docker-manager)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8+-yellow.svg)](https://python.org)
 
