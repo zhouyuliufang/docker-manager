@@ -206,6 +206,35 @@ textarea.input{resize:vertical;min-height:80px}
 
 /* ═══════════════ 页脚 ═══════════════ */
 .footer{padding:16px 24px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text2);display:flex;justify-content:center;gap:16px;align-items:center}
+
+/* ═══════════════ 容器详情弹窗 ═══════════════ */
+.detail-section{margin-bottom:20px}
+.detail-section-title{font-size:13px;font-weight:600;color:var(--blue);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.detail-info-grid{display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:start}
+.detail-info-item{display:flex;flex-direction:column;gap:2px}
+.detail-info-label{font-size:11px;color:var(--text2);font-weight:500}
+.detail-info-value{font-size:12px;font-family:monospace;word-break:break-all;background:var(--bg3);padding:4px 8px;border-radius:4px}
+.detail-env-list{max-height:200px;overflow-y:auto;font-family:monospace;font-size:11px}
+.detail-env-item{display:flex;gap:8px;padding:3px 0;border-bottom:1px solid var(--border)}
+.detail-env-item:last-child{border-bottom:none}
+.detail-env-key{color:var(--blue);min-width:150px;flex-shrink:0}
+.detail-env-value{color:var(--text2);word-break:break-all;flex:1}
+.detail-mount-list{max-height:180px;overflow-y:auto}
+.detail-mount-item{background:var(--bg3);padding:8px 10px;border-radius:6px;margin-bottom:8px;font-family:monospace;font-size:11px}
+.detail-mount-source{color:var(--green);margin-bottom:4px}
+.detail-mount-dest{color:var(--yellow)}
+.detail-network-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.detail-network-item:last-child{border-bottom:none}
+.detail-port-list{display:flex;flex-wrap:wrap;gap:6px}
+.detail-port-item{background:var(--bg3);padding:4px 10px;border-radius:6px;font-family:monospace;font-size:12px;border:1px solid var(--border)}
+.detail-tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:0}
+.detail-tab{padding:8px 14px;font-size:12px;font-weight:500;color:var(--text2);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all var(--trans)}
+.detail-tab:hover{color:var(--text)}
+.detail-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.detail-tab-content{display:none}
+.detail-tab-content.active{display:block}
+.detail-loading{text-align:center;padding:40px;color:var(--text2)}
+.detail-error{text-align:center;padding:40px;color:var(--red)}
 </style>
 </head>
 <body>
@@ -213,11 +242,11 @@ textarea.input{resize:vertical;min-height:80px}
 <!-- ══════════════════════ 登录页 ══════════════════════ -->
 <div id="login-page">
   <div class="login-card">
-    <div class="login-logo">🐋</div>
+    <div class="login-logo"></div>
     <div class="login-title">Docker 管理中心</div>
     <div class="login-sub" id="login-sub">正在连接...</div>
     <input id="login-pwd" class="login-input" type="password" placeholder="输入密码" autocomplete="current-password">
-    <button class="login-btn" id="login-btn" onclick="doLogin()">登录</button>
+    <button class="login-btn" id="login-btn" onclick="doLogin()" disabled>登录</button>
     <div class="login-err" id="login-err"></div>
   </div>
 </div>
@@ -227,26 +256,26 @@ textarea.input{resize:vertical;min-height:80px}
   <!-- 顶栏 -->
   <div class="topbar">
     <div class="topbar-logo">
-      <span>🐋</span> Docker 管理中心
+      <span></span> Docker 管理中心
       <span class="topbar-badge" id="version-badge">v3.2.0</span>
     </div>
     <div class="topbar-actions">
-      <button class="icon-btn" onclick="toggleTheme()" title="切换主题" id="theme-btn">🌙</button>
-      <button class="icon-btn" onclick="showChangePasswordModal()" title="修改密码">🔑</button>
-      <button class="icon-btn" onclick="doLogout()" title="退出登录">🚪</button>
+      <button class="icon-btn" onclick="toggleTheme()" title="切换主题" id="theme-btn">深色</button>
+      <button class="icon-btn" onclick="showChangePasswordModal()" title="修改密码">密码</button>
+      <button class="icon-btn" onclick="doLogout()" title="退出登录">退出</button>
     </div>
   </div>
 
   <!-- 标签栏 -->
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('overview')">📊 概览</button>
-    <button class="tab" onclick="switchTab('containers')">🐳 容器管理</button>
-    <button class="tab" onclick="switchTab('monitor')">📈 资源监控</button>
-    <button class="tab" onclick="switchTab('deploy')">🚀 Compose 部署</button>
-    <button class="tab" onclick="switchTab('store')">🏪 应用商店</button>
-    <button class="tab" onclick="switchTab('history')">📋 部署历史</button>
-    <button class="tab" onclick="switchTab('images')">🖼️ 镜像管理</button>
-    <button class="tab" onclick="switchTab('mirrors')">🪞 镜像加速</button>
+    <button class="tab active" onclick="switchTab('overview')">概览</button>
+    <button class="tab" onclick="switchTab('containers')">容器管理</button>
+    <button class="tab" onclick="switchTab('monitor')">资源监控</button>
+    <button class="tab" onclick="switchTab('deploy')">Compose 部署</button>
+    <button class="tab" onclick="switchTab('store')">应用商店</button>
+    <button class="tab" onclick="switchTab('history')">部署历史</button>
+    <button class="tab" onclick="switchTab('images')">镜像管理</button>
+    <button class="tab" onclick="switchTab('mirrors')">镜像加速</button>
   </div>
 
   <!-- 内容区 -->
@@ -262,11 +291,11 @@ textarea.input{resize:vertical;min-height:80px}
       </div>
       <div class="grid2">
         <div class="card">
-          <div class="card-title">⚡ CPU 使用 Top 5</div>
+          <div class="card-title">CPU 使用 Top 5</div>
           <div id="ov-cpu-list"><div style="color:var(--text2);font-size:13px">加载中...</div></div>
         </div>
         <div class="card">
-          <div class="card-title">💾 内存使用 Top 5</div>
+          <div class="card-title">内存使用 Top 5</div>
           <div id="ov-mem-list"><div style="color:var(--text2);font-size:13px">加载中...</div></div>
         </div>
       </div>
@@ -275,14 +304,14 @@ textarea.input{resize:vertical;min-height:80px}
     <!-- ── 容器管理 ── -->
     <div id="panel-containers" class="panel">
       <div class="search-bar">
-        <input id="container-search" class="input search-input" placeholder="🔍 搜索容器名/镜像..." oninput="filterContainers()">
+        <input id="container-search" class="input search-input" placeholder=" 搜索容器名/镜像..." oninput="filterContainers()">
         <select class="filter-select" id="container-status-filter" onchange="filterContainers()">
           <option value="">全部状态</option>
           <option value="running">运行中</option>
           <option value="exited">已停止</option>
         </select>
-        <button class="btn btn-ghost" onclick="loadContainers()">🔄 刷新</button>
-        <button class="btn btn-ghost" id="check-all-btn" onclick="checkAllImageUpdates()" title="检查所有容器镜像是否有更新">🔍 检查所有镜像更新</button>
+        <button class="btn btn-ghost" onclick="loadContainers()"> 刷新</button>
+        <button class="btn btn-ghost" id="check-all-btn" onclick="checkAllImageUpdates()" title="检查所有容器镜像是否有更新"> 检查所有镜像更新</button>
       </div>
       <div class="card" style="padding:0;overflow:hidden">
         <div style="overflow-x:auto">
@@ -308,40 +337,49 @@ textarea.input{resize:vertical;min-height:80px}
     <!-- ── 资源监控 ── -->
     <div id="panel-monitor" class="panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div style="font-size:15px;font-weight:600">📈 实时资源监控</div>
+        <div style="font-size:15px;font-weight:600"> 实时资源监控</div>
         <div style="display:flex;align-items:center;gap:10px">
           <label style="font-size:12px;color:var(--text2)">
             <input type="checkbox" id="auto-refresh" checked onchange="toggleAutoRefresh()"> 自动刷新（5s）
           </label>
-          <button class="btn btn-ghost btn-sm" onclick="loadStats()">🔄 刷新</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadStats()"> 刷新</button>
         </div>
       </div>
       <div class="grid2" style="margin-bottom:16px">
         <div class="card">
-          <div class="card-title">💽 磁盘使用</div>
+          <div class="card-title"> 磁盘使用</div>
           <div id="disk-info" style="color:var(--text2);font-size:13px">加载中...</div>
         </div>
         <div class="card">
-          <div class="card-title">🏷️ 统计概要</div>
+          <div class="card-title">️ 统计概要</div>
           <div id="stats-summary" style="color:var(--text2);font-size:13px">加载中...</div>
         </div>
       </div>
       <div class="card">
-        <div class="card-title">⚡ CPU 使用率</div>
+        <div class="card-title">CPU 使用率</div>
         <div id="cpu-bars">加载中...</div>
       </div>
       <div class="card">
-        <div class="card-title">💾 内存使用率</div>
+        <div class="card-title">内存使用率</div>
         <div id="mem-bars">加载中...</div>
       </div>
     </div>
 
     <!-- ── Compose 部署 ── -->
     <div id="panel-deploy" class="panel">
-      <div class="grid2">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:15px;font-weight:600">Compose 部署</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:12px;color:var(--text2)">编辑模式：</span>
+          <button class="btn btn-sm" id="editor-mode-btn" onclick="toggleEditorMode()">YAML 编辑</button>
+        </div>
+      </div>
+      
+      <!-- YAML 编辑模式 -->
+      <div id="compose-yaml-editor" class="grid2">
         <div>
           <div class="card">
-            <div class="card-title">📝 Compose 文件</div>
+            <div class="card-title">Compose 文件</div>
             <div style="display:flex;gap:8px;margin-bottom:10px">
               <input id="project-name" class="input" placeholder="项目名称（英文小写）" style="flex:1">
               <select id="saved-select" class="filter-select" style="width:160px" onchange="loadSavedCompose(this.value)">
@@ -356,29 +394,59 @@ services:
     ports:
       - &quot;8080:80&quot;"></textarea>
             <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-              <button class="btn btn-primary" onclick="doDeploy()" id="deploy-btn">🚀 部署</button>
-              <button class="btn btn-danger" onclick="doStop()" id="stop-btn">⏹ 停止</button>
-              <button class="btn btn-ghost" onclick="saveCurrentCompose()">💾 保存</button>
-              <button class="btn btn-ghost" onclick="validateCompose()">✅ 验证</button>
+              <button class="btn btn-primary" onclick="doDeploy()" id="deploy-btn">部署</button>
+              <button class="btn btn-danger" onclick="doStop()" id="stop-btn">停止</button>
+              <button class="btn btn-ghost" onclick="saveCurrentCompose()">保存</button>
+              <button class="btn btn-ghost" onclick="validateCompose()">验证</button>
             </div>
           </div>
           <!-- 已保存列表 -->
           <div class="card">
-            <div class="card-title">💾 已保存的 Compose</div>
+            <div class="card-title">已保存的 Compose</div>
             <div id="saved-composes-list"><div style="color:var(--text2);font-size:13px">暂无保存</div></div>
           </div>
         </div>
         <div>
           <!-- 部署进度 -->
           <div class="card" id="deploy-status-card" style="display:none">
-            <div class="card-title">📡 部署状态</div>
+            <div class="card-title">部署状态</div>
             <div id="deploy-phase-badge" class="phase-badge badge-blue">等待中</div>
             <div class="deploy-progress"><div class="deploy-progress-fill" id="deploy-progress-fill" style="width:0%;background:linear-gradient(90deg,#2563eb,#7c3aed)"></div></div>
             <div style="font-size:12px;color:var(--text2);margin-bottom:10px" id="deploy-progress-text">0%</div>
             <div class="log-box" id="deploy-log"></div>
             <div id="deploy-error-card" style="display:none;margin-top:10px;padding:12px;background:#1a0a0a;border-left:3px solid var(--red);border-radius:6px">
-              <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:6px">⚠️ 失败原因</div>
+              <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:6px">失败原因</div>
               <div id="deploy-error-content" style="font-family:monospace;font-size:12px;color:var(--red);line-height:1.7"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 可视化编辑器模式 -->
+      <div id="compose-visual-editor" style="display:none">
+        <div class="grid2">
+          <div>
+            <div class="card">
+              <div class="card-title">可视化编辑器</div>
+              <div id="visual-services-list">
+                <div style="color:var(--text2);font-size:13px;padding:20px;text-align:center">
+                  暂无服务，点击下方按钮添加
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="addVisualService()" style="width:100%;margin-top:10px">
+                + 添加服务
+              </button>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title">预览</div>
+              <textarea id="compose-preview" class="compose-editor" readonly style="height:300px;background:var(--bg)"></textarea>
+              <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+                <button class="btn btn-primary" onclick="deployFromVisual()" id="visual-deploy-btn">部署</button>
+                <button class="btn btn-ghost" onclick="copyVisualYaml()">复制 YAML</button>
+                <button class="btn btn-ghost" onclick="loadYamlToVisual()">加载到可视化</button>
+              </div>
             </div>
           </div>
         </div>
@@ -388,7 +456,7 @@ services:
     <!-- ── 应用商店 ── -->
     <div id="panel-store" class="panel">
       <div class="search-bar">
-        <input id="app-search" class="input search-input" placeholder="🔍 搜索应用..." oninput="filterApps()">
+        <input id="app-search" class="input search-input" placeholder=" 搜索应用..." oninput="filterApps()">
         <select class="filter-select" id="app-category" onchange="filterApps()">
           <option value="">全部分类</option>
         </select>
@@ -399,8 +467,8 @@ services:
     <!-- ── 部署历史 ── -->
     <div id="panel-history" class="panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div style="font-size:15px;font-weight:600">📋 部署历史（最近50条）</div>
-        <button class="btn btn-ghost btn-sm" onclick="loadHistory()">🔄 刷新</button>
+        <div style="font-size:15px;font-weight:600"> 部署历史（最近50条）</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadHistory()"> 刷新</button>
       </div>
       <div class="card" id="history-list"><div style="color:var(--text2);font-size:13px">暂无记录</div></div>
     </div>
@@ -408,11 +476,12 @@ services:
     <!-- ── 镜像管理 ── -->
     <div id="panel-images" class="panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-        <div style="font-size:15px;font-weight:600">🖼️ 本地镜像管理</div>
+        <div style="font-size:15px;font-weight:600">本地镜像管理</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="loadImages()">🔄 刷新列表</button>
-          <button class="btn btn-ghost btn-sm" id="scan-all-btn" onclick="scanAllImageUpdates()">🔍 全量检查更新</button>
-          <button class="btn btn-success btn-sm" id="update-all-btn" style="display:none" onclick="updateAllOutdated()">⬆️ 一键更新全部</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadImages()">刷新列表</button>
+          <button class="btn btn-ghost btn-sm" id="scan-all-btn" onclick="scanAllImageUpdates()">全量检查更新</button>
+          <button class="btn btn-danger btn-sm" id="batch-delete-btn" onclick="batchDeleteImages()" disabled>删除已选 (0)</button>
+          <button class="btn btn-success btn-sm" id="update-all-btn" style="display:none" onclick="updateAllOutdated()">一键更新全部</button>
         </div>
       </div>
       <!-- 扫描进度提示 -->
@@ -456,7 +525,7 @@ services:
           <div style="font-size:12px;color:var(--text2);margin-bottom:8px">快速添加预设</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap" id="mirror-presets"></div>
         </div>
-        <button class="btn btn-primary" onclick="saveMirrors()">💾 保存并重启 Docker</button>
+        <button class="btn btn-primary" onclick="saveMirrors()"> 保存并重启 Docker</button>
       </div>
     </div>
 
@@ -476,7 +545,7 @@ services:
 <!-- ══════════════════════ Modal：容器日志 ══════════════════════ -->
 <div class="modal-overlay" id="log-modal">
   <div class="modal" style="width:800px">
-    <div class="modal-title">📜 <span id="log-modal-title">容器日志</span></div>
+    <div class="modal-title"> <span id="log-modal-title">容器日志</span></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       <label style="font-size:12px;color:var(--text2)">显示行数：</label>
       <select id="log-tail" class="filter-select" style="width:100px">
@@ -485,8 +554,8 @@ services:
         <option value="300">300 行</option>
         <option value="500">500 行</option>
       </select>
-      <button class="btn btn-ghost btn-sm" onclick="reloadContainerLog()">🔄 刷新</button>
-      <button class="btn btn-ghost btn-sm" id="log-follow-btn" onclick="toggleFollow()">⏸ 停止跟随</button>
+      <button class="btn btn-ghost btn-sm" onclick="reloadContainerLog()">刷新</button>
+      <button class="btn btn-ghost btn-sm" id="log-follow-btn" onclick="toggleFollow()">停止跟随</button>
     </div>
     <div class="log-box" id="log-modal-box" style="height:420px"></div>
     <div class="modal-actions">
@@ -495,10 +564,44 @@ services:
   </div>
 </div>
 
+<!-- ══════════════════════ Modal：容器详情 ══════════════════════ -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal" style="width:700px">
+    <div class="modal-title"> <span id="detail-modal-title">容器详情</span></div>
+    <div id="detail-content">
+      <div class="detail-loading">加载中...</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="refreshDetail()">刷新</button>
+      <button class="btn btn-ghost" onclick="closeDetailModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ Modal：Web 终端 ══════════════════════ -->
+<div class="modal-overlay" id="terminal-modal">
+  <div class="modal" style="width:850px;max-height:90vh">
+    <div class="modal-title"> 终端 <span id="terminal-title" style="font-size:14px;color:var(--text2)"></span></div>
+    <div class="terminal-info" id="terminal-info" style="padding:8px 12px;background:var(--bg3);border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text2)">
+      加载中...
+    </div>
+    <div id="terminal-output" class="terminal-box" style="height:400px;overflow-y:auto;padding:12px;background:#0d1117;border:1px solid var(--border);border-radius:8px;font-family:'Courier New',monospace;font-size:13px;line-height:1.6;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="color:var(--green);font-family:monospace;font-size:14px">$</span>
+      <input id="terminal-input" class="filter-input" style="flex:1;font-family:monospace" placeholder="输入命令后按 Enter 执行" onkeydown="handleTerminalInput(event)">
+      <button class="btn btn-ghost btn-sm" onclick="clearTerminal()">清空</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeTerminalModal()">关闭</button>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text2)">
+      提示：可执行常用命令如 <code style="background:var(--bg3);padding:2px 6px;border-radius:4px">ls</code> <code style="background:var(--bg3);padding:2px 6px;border-radius:4px">ps aux</code> <code style="background:var(--bg3);padding:2px 6px;border-radius:4px">cat /etc/os-release</code> <code style="background:var(--bg3);padding:2px 6px;border-radius:4px">env</code> <code style="background:var(--bg3);padding:2px 6px;border-radius:4px">top</code> 等
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════════ Modal：修改密码 ══════════════════════ -->
 <div class="modal-overlay" id="pwd-modal">
   <div class="modal" style="width:380px">
-    <div class="modal-title">🔑 修改密码</div>
+    <div class="modal-title"> 修改密码</div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <input id="old-pwd" class="input" type="password" placeholder="当前密码">
       <input id="new-pwd" class="input" type="password" placeholder="新密码（至少6位）">
@@ -514,7 +617,7 @@ services:
 <!-- ══════════════════════ Modal：关于 ══════════════════════ -->
 <div class="modal-overlay" id="about-modal">
   <div class="modal" style="width:400px;text-align:center">
-    <div style="font-size:48px;margin-bottom:12px">🐋</div>
+    <div style="font-size:48px;margin-bottom:12px"></div>
     <div style="font-size:20px;font-weight:700;margin-bottom:8px">Docker 管理中心</div>
     <div style="color:var(--text2);font-size:13px;line-height:1.8;margin-bottom:16px">
       v3.2.0 · 专为极空间 NAS 设计<br>
@@ -530,20 +633,20 @@ services:
 <!-- ══════════════════════ Modal：使用手册 ══════════════════════ -->
 <div class="modal-overlay" id="manual-modal">
   <div class="modal" style="width:640px">
-    <div class="modal-title">📖 使用手册</div>
+    <div class="modal-title"> 使用手册</div>
     <div style="font-size:13px;line-height:2;color:var(--text2)">
-      <b style="color:var(--text)">🐳 容器管理</b><br>
+      <b style="color:var(--text)"> 容器管理</b><br>
       查看所有容器状态，支持启动/停止/重启/删除，点击「日志」实时查看容器输出。<br><br>
-      <b style="color:var(--text)">📈 资源监控</b><br>
+      <b style="color:var(--text)"> 资源监控</b><br>
       实时展示每个容器的 CPU、内存使用率，以及磁盘总体使用情况，每5秒自动刷新。<br><br>
-      <b style="color:var(--text)">🚀 Compose 部署</b><br>
+      <b style="color:var(--text)"> Compose 部署</b><br>
       粘贴 docker-compose.yml 内容，填写项目名，点击部署。支持实时进度条和日志流。<br>
       可保存常用 Compose 文件，下次一键加载。<br><br>
-      <b style="color:var(--text)">🏪 应用商店</b><br>
+      <b style="color:var(--text)"> 应用商店</b><br>
       内置15款常用应用模板，点击「一键部署」自动填充 compose 并跳转到部署页。<br><br>
       <b style="color:var(--text)">🪞 镜像加速</b><br>
       配置国内镜像加速器，解决 Docker Hub 拉取超时问题。支持拖拽排序。<br><br>
-      <b style="color:var(--text)">🔑 密码安全</b><br>
+      <b style="color:var(--text)"> 密码安全</b><br>
       密码存储在容器的 /data 挂载目录，重建容器不会丢失。Token 有效期7天。
     </div>
     <div class="modal-actions">
@@ -580,6 +683,8 @@ services:
 //  全局状态
 // ══════════════════════════════════════════════════════
 const BACKEND = '';
+console.log('Docker管理中心 v3.2.0 - 20260330修复版');
+console.log('DOMContentLoaded修复已应用');
 let TOKEN = localStorage.getItem('dm_token') || '';
 let currentTab = 'overview';
 let allContainers = [];
@@ -614,6 +719,266 @@ function toast(msg, type = 'info') {
   setTimeout(() => el.remove(), 3500);
 }
 
+// ══════════════════════════════════════════════════════
+//  镜像管理增强（新增）
+// ══════════════════════════════════════════════════════
+// allImages 已在第2420行全局声明，此处不再重复声明
+// imageUpdateCache 已在全局状态中定义（第700行），此处不再重复声明
+let selectedImages = new Set();
+
+async function loadImages() {
+  const tbody = document.getElementById('images-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px">加载中...</td></tr>';
+  
+  try {
+    const images = await api('GET', '/api/images');
+    if (images.error) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:24px">加载失败: ${images.error}</td></tr>`;
+      return;
+    }
+    
+    allImages = images;
+    imageUpdateCache = {};
+    selectedImages.clear();
+    
+    renderImages();
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:24px">加载失败: ${e.message}</td></tr>`;
+  }
+}
+
+function renderImages() {
+  const tbody = document.getElementById('images-tbody');
+  if (!allImages || allImages.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:24px">暂无镜像</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = allImages.map(img => {
+    const shortId = img.Id ? img.Id.slice(7, 19) : '-';
+    const size = formatBytes(img.Size || 0);
+    const created = img.Created ? new Date(img.Created * 1000).toLocaleDateString('zh-CN') : '-';
+    const name = img.RepoTags && img.RepoTags[0] ? img.RepoTags[0] : '<span style="color:var(--text2)">(无标签)</span>';
+    const isSelected = selectedImages.has(shortId);
+    
+    const cache = imageUpdateCache[img.RepoTags && img.RepoTags[0]] || {};
+    let statusCell = '-';
+    if (cache.checking) {
+      statusCell = '<span style="color:var(--text2)">检查中...</span>';
+    } else if (cache.has_update === true) {
+      statusCell = '<span class="badge badge-orange">有更新</span>';
+    } else if (cache.has_update === null) {
+      statusCell = '<span class="badge badge-yellow">可能有更新</span>';
+    } else if (cache.has_update === false) {
+      statusCell = '<span class="badge badge-green">最新</span>';
+    } else if (cache.error) {
+      statusCell = '<span class="badge badge-gray">检查失败</span>';
+    }
+    
+    return `
+      <tr data-id="${shortId}">
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleImageSelect('${shortId}', this.checked)" style="cursor:pointer">
+            <span style="font-family:monospace;font-size:12px;word-break:break-all">${name}</span>
+          </div>
+        </td>
+        <td style="font-family:monospace;font-size:12px;color:var(--text2)">${shortId}</td>
+        <td style="font-family:monospace;font-size:12px">${size}</td>
+        <td style="font-size:12px;color:var(--text2)">${created}</td>
+        <td>${statusCell}</td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="checkImageUpdate('${(img.RepoTags && img.RepoTags[0]) || ''}')">检查</button>
+            <button class="btn btn-ghost btn-sm" onclick="showImageDetail('${shortId}')">详情</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteImage('${shortId}', '${(img.RepoTags && img.RepoTags[0]) || ''}')">删除</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  
+  updateBatchButtons();
+}
+
+function toggleImageSelect(id, checked) {
+  if (checked) {
+    selectedImages.add(id);
+  } else {
+    selectedImages.delete(id);
+  }
+  updateBatchButtons();
+}
+
+function updateBatchButtons() {
+  const count = selectedImages.size;
+  const batchDeleteBtn = document.getElementById('batch-delete-btn');
+  if (batchDeleteBtn) {
+    batchDeleteBtn.textContent = `删除已选 (${count})`;
+    batchDeleteBtn.disabled = count === 0;
+  }
+}
+
+async function checkImageUpdate(imageName) {
+  if (!imageName) {
+    toast('无法检查无标签镜像', 'error');
+    return;
+  }
+  
+  imageUpdateCache[imageName] = { checking: true };
+  renderImages();
+  
+  try {
+    const result = await api('POST', '/api/images/check-update', { name: imageName });
+    imageUpdateCache[imageName] = result;
+    renderImages();
+    
+    if (result.has_update) {
+      toast(`${imageName} 有可用更新`, 'success');
+    } else if (result.has_update === false) {
+      toast(`${imageName} 已是最新`, 'info');
+    }
+  } catch(e) {
+    imageUpdateCache[imageName] = { error: e.message };
+    renderImages();
+    toast('检查更新失败: ' + e.message, 'error');
+  }
+}
+
+async function deleteImage(shortId, imageName) {
+  const name = imageName || shortId;
+  if (!confirm(`确定要删除镜像 "${name}" 吗？\n\n注意：此操作不可恢复！`)) {
+    return;
+  }
+  
+  toast(`正在删除镜像 ${name}...`);
+  
+  try {
+    const result = await api('POST', `/api/images/${shortId}/delete`);
+    if (result.ok || result.success) {
+      toast(`镜像 ${name} 已删除`, 'success');
+      loadImages();
+    } else {
+      toast(result.error || '删除失败', 'error');
+    }
+  } catch(e) {
+    toast('删除失败: ' + e.message, 'error');
+  }
+}
+
+async function batchDeleteImages() {
+  if (selectedImages.size === 0) {
+    toast('请先选择要删除的镜像', 'error');
+    return;
+  }
+  
+  const count = selectedImages.size;
+  if (!confirm(`确定要删除选中的 ${count} 个镜像吗？\n\n注意：此操作不可恢复！`)) {
+    return;
+  }
+  
+  let success = 0, failed = 0;
+  const failedList = [];
+  
+  for (const id of selectedImages) {
+    try {
+      const img = allImages.find(i => i.Id && i.Id.slice(7, 19) === id);
+      const imageName = img && img.RepoTags && img.RepoTags[0] ? img.RepoTags[0] : id;
+      const result = await api('POST', `/api/images/${id}/delete`);
+      if (result.ok || result.success) {
+        success++;
+      } else {
+        failed++;
+        failedList.push(imageName);
+      }
+    } catch(e) {
+      failed++;
+      failedList.push(id);
+    }
+  }
+  
+  if (failed === 0) {
+    toast(`成功删除 ${success} 个镜像`, 'success');
+  } else {
+    toast(`成功 ${success} 个，失败 ${failed} 个`, failed > success ? 'error' : 'info');
+  }
+  
+  selectedImages.clear();
+  loadImages();
+}
+
+function showImageDetail(shortId) {
+  const img = allImages.find(i => i.Id && i.Id.slice(7, 19) === shortId);
+  if (!img) {
+    toast('未找到镜像信息', 'error');
+    return;
+  }
+  
+  const tags = (img.RepoTags || []).join(', ') || '(无标签)';
+  const digests = (img.RepoDigests || []).join('\n') || '无';
+  
+  alert(`镜像详情\n\n标签: ${tags}\nID: ${img.Id}\n大小: ${formatBytes(img.Size || 0)}\n创建: ${img.Created ? new Date(img.Created * 1000).toLocaleString('zh-CN') : '-'}\n\n层数: ${img.RootFS && img.RootFS.Layers ? img.RootFS.Layers.length : '?'}\n\n仓库摘要:\n${digests}`);
+}
+
+async function scanAllImageUpdates() {
+  const btn = document.getElementById('scan-all-btn');
+  if (!btn) return;
+  
+  btn.disabled = true;
+  btn.textContent = '检查中...';
+  
+  const progressBar = document.getElementById('scan-progress-bar');
+  const progressText = document.getElementById('scan-progress-text');
+  const progressFill = document.getElementById('scan-progress-fill');
+  
+  progressBar.style.display = 'block';
+  
+  // 只检查有标签的镜像
+  const taggedImages = allImages.filter(img => img.RepoTags && img.RepoTags.length > 0);
+  let checked = 0;
+  
+  for (const img of taggedImages) {
+    const name = img.RepoTags[0];
+    progressText.textContent = `正在检查 ${name} (${checked + 1}/${taggedImages.length})...`;
+    progressFill.style.width = ((checked / taggedImages.length) * 100) + '%';
+    
+    try {
+      const result = await api('POST', '/api/images/check-update', { name });
+      imageUpdateCache[name] = result;
+    } catch(e) {
+      imageUpdateCache[name] = { error: e.message };
+    }
+    
+    checked++;
+    renderImages();
+  }
+  
+  progressFill.style.width = '100%';
+  progressText.textContent = `检查完成，共 ${taggedImages.length} 个镜像`;
+  
+  setTimeout(() => {
+    progressBar.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = '全量检查更新';
+  }, 2000);
+  
+  // 统计有更新的
+  const updatable = taggedImages.filter(img => {
+    const c = imageUpdateCache[img.RepoTags[0]];
+    return c && (c.has_update === true || c.has_update === null);
+  });
+  
+  if (updatable.length > 0) {
+    toast(`发现 ${updatable.length} 个镜像有可用更新`, 'success');
+    const updateAllBtn = document.getElementById('update-all-btn');
+    if (updateAllBtn) {
+      updateAllBtn.style.display = 'inline-flex';
+    }
+  } else {
+    toast('所有镜像均已是最新版本', 'info');
+  }
+}
+
 function formatTime(ts) {
   if (!ts) return '-';
   return new Date(ts * 1000).toLocaleString('zh-CN');
@@ -637,14 +1002,14 @@ function toggleTheme() {
   const html = document.documentElement;
   const isDark = html.getAttribute('data-theme') === 'dark';
   html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('theme-btn').textContent = isDark ? '浅色' : '深色';
   localStorage.setItem('dm_theme', isDark ? 'light' : 'dark');
 }
 
 function initTheme() {
   const saved = localStorage.getItem('dm_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
-  document.getElementById('theme-btn').textContent = saved === 'dark' ? '🌙' : '☀️';
+  document.getElementById('theme-btn').textContent = saved === 'dark' ? '深色' : '浅色';
 }
 
 // ══════════════════════════════════════════════════════
@@ -657,15 +1022,49 @@ async function checkAuth() {
     const sub = document.getElementById('login-sub');
     sub.textContent = data.initialized ? '输入密码以登录' : '首次使用，请设置密码';
     document.getElementById('login-btn').textContent = data.initialized ? '登录' : '设置密码并登录';
+    document.getElementById('login-btn').disabled = false;
   } catch(e) {
-    document.getElementById('login-sub').textContent = '⚠️ 无法连接后端服务';
+    const sub = document.getElementById('login-sub');
+    sub.textContent = '无法连接后端服务: ' + (e && e.message ? e.message : String(e));
+    sub.style.color = '#f87171';
   }
 }
 
+// 全局捕获 JS 错误，显示到登录页
+window.onerror = function(msg, src, line, col, err) {
+  const sub = document.getElementById('login-sub');
+  if (sub) {
+    sub.textContent = 'JS错误(' + line + '): ' + msg;
+    sub.style.color = '#f87171';
+  }
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+  const sub = document.getElementById('login-sub');
+  if (sub) {
+    sub.textContent = 'Promise错误: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason));
+    sub.style.color = '#f87171';
+  }
+});
+
 async function doLogin() {
+  console.log('doLogin() 被调用');
   const pwd = document.getElementById('login-pwd').value;
   const errEl = document.getElementById('login-err');
-  if (!pwd) { errEl.textContent = '请输入密码'; return; }
+  const sub = document.getElementById('login-sub');
+  console.log('密码长度:', pwd ? pwd.length : 0);
+  
+  if (!pwd) { 
+    errEl.textContent = '请输入密码'; 
+    console.log('密码为空，显示错误提示');
+    return; 
+  }
+  
+  // 登录等待状态
+  sub.textContent = '正在登录...';
+  sub.style.color = '';
+  errEl.textContent = '';
+  document.getElementById('login-btn').disabled = true;
   try {
     const r = await fetch(BACKEND + '/api/auth/login', {
       method: 'POST',
@@ -673,15 +1072,23 @@ async function doLogin() {
       body: JSON.stringify({ password: pwd })
     });
     const data = await r.json();
+    console.log('登录响应状态:', r.status, '数据:', data);
     if (data.token) {
+      console.log('登录成功，获取到 token');
       TOKEN = data.token;
       localStorage.setItem('dm_token', TOKEN);
       showApp();
     } else {
+      console.log('登录失败:', data.error);
       errEl.textContent = data.error || '登录失败';
+      sub.textContent = '输入密码以登录';
+      document.getElementById('login-btn').disabled = false;
     }
   } catch(e) {
+    console.error('登录异常:', e);
     errEl.textContent = '网络错误，请检查后端服务';
+    sub.textContent = '输入密码以登录';
+    document.getElementById('login-btn').disabled = false;
   }
 }
 
@@ -874,7 +1281,7 @@ function renderContainers(list) {
     const cache = imageUpdateCache[imgKey];
     let updateCell = '';
     if (!cache) {
-      updateCell = `<button class="btn btn-ghost btn-sm" onclick="checkOneContainerImage('${imgKey.replace(/'/g,"\\'")}')">🔍 检查</button>`;
+      updateCell = `<button class="btn btn-ghost btn-sm" onclick="checkOneContainerImage('${imgKey.replace(/'/g,"\\'")}')"> 检查</button>`;
     } else if (cache.checking) {
       updateCell = `<span style="color:var(--text2);font-size:12px">检查中...</span>`;
     } else if (cache.has_update === true) {
@@ -882,9 +1289,9 @@ function renderContainers(list) {
         <button class="btn btn-sm" style="background:var(--yellow);color:#000;margin-left:4px" onclick="doUpdateImage('${imgKey.replace(/'/g,"\\'")}', true)">⬆️ 更新</button>`;
     } else if (cache.has_update === null) {
       updateCell = `<span class="badge badge-yellow" title="${cache.message}">可能有更新</span>
-        <button class="btn btn-sm" style="background:var(--yellow);color:#000;margin-left:4px" onclick="doUpdateImage('${imgKey.replace(/'/g,"\\'")}', true)">⬆️ 更新</button>`;
+        <button class="btn btn-sm" style="background:var(--yellow);color:#000;margin-left:4px" onclick="doUpdateImage('${imgKey.replace(/'/g,"\\'")}', true)">[更新]</button>`;
     } else if (cache.has_update === false) {
-      updateCell = `<span class="badge badge-green">✓ 最新</span>`;
+      updateCell = `<span class="badge badge-green">最新</span>`;
     } else if (cache.error) {
       updateCell = `<span class="badge badge-gray" title="${cache.error}">检查失败</span>`;
     }
@@ -896,11 +1303,13 @@ function renderContainers(list) {
       <td style="font-family:monospace;font-size:12px">${ports}</td>
       <td style="min-width:130px">${updateCell}</td>
       <td><div class="action-group">
-        ${isRunning ? `<button class="btn btn-ghost btn-sm" onclick="containerAction('${c.Id}','stop','${name}')">⏹</button>
-                       <button class="btn btn-ghost btn-sm" onclick="containerAction('${c.Id}','restart','${name}')">🔄</button>`
-                    : `<button class="btn btn-ghost btn-sm" onclick="containerAction('${c.Id}','start','${name}')">▶</button>`}
-        <button class="btn btn-ghost btn-sm" onclick="openLogModal('${c.Id}','${name}')">📜 日志</button>
-        <button class="btn btn-danger btn-sm" onclick="confirmRemove('${c.Id}','${name}')">🗑</button>
+        <button class="btn btn-ghost btn-sm" onclick="openDetailModal('${c.Id}','${name.replace(/'/g,"\\'")}')" title="查看详情">[详情]</button>
+        ${isRunning ? `<button class="btn btn-ghost btn-sm" onclick="openTerminalModal('${c.Id}','${name.replace(/'/g,"\\'")}')" title="终端">[终端]</button>
+                       <button class="btn btn-ghost btn-sm" onclick="containerAction('${c.Id}','stop','${name}')">停止</button>
+                       <button class="btn btn-ghost btn-sm" onclick="containerAction('${c.Id}','restart','${name}')">重启</button>`
+                    : `<button class="btn btn-ghost btn-sm" onclick="containerAction('${c.Id}','start','${name}')">启动</button>`}
+        <button class="btn btn-ghost btn-sm" onclick="openLogModal('${c.Id}','${name}')">[日志]</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmRemove('${c.Id}','${name}')">[删除]</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -931,7 +1340,7 @@ async function checkAllImageUpdates() {
     btn.textContent = `检查中 ${i+1}/${images.length}...`;
   }
   btn.disabled = false;
-  btn.textContent = '🔍 检查所有镜像更新';
+  btn.textContent = ' 检查所有镜像更新';
   // 统计有更新的
   const updatable = images.filter(img => {
     const c = imageUpdateCache[img];
@@ -971,7 +1380,7 @@ function openLogModal(cid, name) {
   logFollowing = true;
   document.getElementById('log-modal-title').textContent = `容器日志 · ${name}`;
   document.getElementById('log-modal').classList.add('show');
-  document.getElementById('log-follow-btn').textContent = '⏸ 停止跟随';
+  document.getElementById('log-follow-btn').textContent = '停止跟随';
   startLogStream();
 }
 
@@ -1002,12 +1411,359 @@ function reloadContainerLog() { startLogStream(); }
 function toggleFollow() {
   logFollowing = !logFollowing;
   document.getElementById('log-follow-btn').textContent =
-    logFollowing ? '⏸ 停止跟随' : '▶ 跟随日志';
+    logFollowing ? '停止跟随' : '开始跟随';
 }
 
 function closeLogModal() {
   if (logEventSource) { logEventSource.close(); logEventSource = null; }
   closeModal('log-modal');
+}
+
+// ══════════════════════════════════════════════════════
+//  容器详情（优化新增）
+// ══════════════════════════════════════════════════════
+let currentDetailCid = '';
+let currentDetailTab = 'basic';
+
+function openDetailModal(cid, name) {
+  currentDetailCid = cid;
+  currentDetailTab = 'basic';
+  document.getElementById('detail-modal-title').textContent = `容器详情 · ${name}`;
+  document.getElementById('detail-modal').classList.add('show');
+  loadContainerDetail();
+}
+
+async function loadContainerDetail() {
+  const content = document.getElementById('detail-content');
+  content.innerHTML = '<div class="detail-loading">加载中...</div>';
+
+  try {
+    const [details, env, logs] = await Promise.all([
+      api('GET', `/api/container/${currentDetailCid}/details`),
+      api('GET', `/api/container/${currentDetailCid}/env`),
+      api('GET', `/api/container/${currentDetailCid}/logs-basic?lines=50`)
+    ]);
+
+    if (details.error) {
+      content.innerHTML = `<div class="detail-error">加载失败：${details.error}</div>`;
+      return;
+    }
+
+    // 基本信息
+    const basicInfo = `
+      <div class="detail-section">
+        <div class="detail-section-title"> 基本信息</div>
+        <div class="detail-info-grid">
+          <div class="detail-info-item"><span class="detail-info-label">容器ID</span><span class="detail-info-value">${details.id ? details.id.slice(0,12) : '-'}</span></div>
+          <div class="detail-info-item"><span class="detail-info-label">容器名</span><span class="detail-info-value">${details.name || '-'}</span></div>
+          <div class="detail-info-item"><span class="detail-info-label">镜像</span><span class="detail-info-value" style="word-break:break-all">${details.image || '-'}</span></div>
+          <div class="detail-info-item"><span class="detail-info-label">状态</span><span class="detail-info-value">${details.state?.Status || '-'}</span></div>
+          <div class="detail-info-item"><span class="detail-info-label">创建时间</span><span class="detail-info-value">${details.created ? new Date(details.created).toLocaleString('zh-CN') : '-'}</span></div>
+          <div class="detail-info-item"><span class="detail-info-label">重启策略</span><span class="detail-info-value">${details.host_config?.RestartPolicy?.Name || '-'}</span></div>
+          <div class="detail-info-item"><span class="detail-info-label">内存限制</span><span class="detail-info-value">${details.host_config?.Memory ? formatBytes(details.host_config.Memory) : '无限制'}</span></div>
+        </div>
+      </div>
+    `;
+
+    // 环境变量
+    let envContent = '<div style="color:var(--text2);font-size:12px">暂无环境变量</div>';
+    if (env.env && env.env.length > 0) {
+      envContent = `<div class="detail-env-list">${env.env.slice(0, 100).map(e => `
+        <div class="detail-env-item">
+          <span class="detail-env-key">${escapeHtml(e.key)}</span>
+          <span class="detail-env-value">${escapeHtml(e.value)}</span>
+        </div>
+      `).join('')}${env.env.length > 100 ? `<div style="color:var(--text2);padding:8px 0">...共 ${env.env.length} 个环境变量，仅显示前100个</div>` : ''}</div>`;
+    }
+    if (env.error) {
+      envContent = `<div style="color:var(--red);font-size:12px">获取失败：${env.error}</div>`;
+    }
+
+    // 挂载卷
+    let mountContent = '<div style="color:var(--text2);font-size:12px">暂无挂载卷</div>';
+    if (details.mounts && details.mounts.length > 0) {
+      mountContent = `<div class="detail-mount-list">${details.mounts.map(m => `
+        <div class="detail-mount-item">
+          <div class="detail-mount-source">源: ${m.source || '-'}</div>
+          <div class="detail-mount-dest">目标: ${m.destination || '-'}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px">${m.type} · ${m.rw ? '读写' : '只读'}</div>
+        </div>
+      `).join('')}</div>`;
+    }
+
+    // 网络
+    let networkContent = '<div style="color:var(--text2);font-size:12px">暂无网络配置</div>';
+    const networks = details.networks || {};
+    if (Object.keys(networks).length > 0) {
+      networkContent = Object.entries(networks).map(([net, info]) => `
+        <div class="detail-network-item">
+          <span style="font-weight:600;color:var(--blue)">${net}</span>
+          <span style="font-family:monospace;font-size:12px">IP: ${info.ip_address || '-'}</span>
+        </div>
+      `).join('');
+    }
+
+    // 端口
+    let portContent = '<div style="color:var(--text2);font-size:12px">暂无端口映射</div>';
+    const ports = details.ports || {};
+    if (Object.keys(ports).length > 0) {
+      const portList = [];
+      for (const [key, val] of Object.entries(ports)) {
+        if (val && val.length > 0) {
+          portList.push(`<span class="detail-port-item">${val[0].HostPort}:${key.split('/')[0]}</span>`);
+        }
+      }
+      if (portList.length > 0) {
+        portContent = `<div class="detail-port-list">${portList.join('')}</div>`;
+      }
+    }
+
+    // 日志预览
+    let logContent = '<div style="color:var(--text2);font-size:12px">暂无日志</div>';
+    if (logs.logs) {
+      const logLines = logs.logs.split('\n').slice(-20);
+      logContent = `<div class="log-box" style="height:150px;font-size:11px">${logLines.map(line => {
+        const isError = line.toLowerCase().includes('error');
+        return `<div class="${isError ? 'log-err' : ''}">${escapeHtml(line)}</div>`;
+      }).join('')}</div>`;
+    }
+
+    content.innerHTML = `
+      <div class="detail-tabs">
+        <button class="detail-tab active" onclick="switchDetailTab('basic')">基本信息</button>
+        <button class="detail-tab" onclick="switchDetailTab('env')">环境变量</button>
+        <button class="detail-tab" onclick="switchDetailTab('mount')">挂载卷</button>
+        <button class="detail-tab" onclick="switchDetailTab('network')">网络</button>
+        <button class="detail-tab" onclick="switchDetailTab('port')">端口</button>
+        <button class="detail-tab" onclick="switchDetailTab('log')">日志</button>
+        <button class="detail-tab" onclick="switchDetailTab('terminal')">终端</button>
+      </div>
+
+      <div id="detail-tab-basic" class="detail-tab-content active">
+        ${basicInfo}
+      </div>
+
+      <div id="detail-tab-env" class="detail-tab-content">
+        <div class="detail-section">
+          <div class="detail-section-title">环境变量</div>
+          ${envContent}
+        </div>
+      </div>
+
+      <div id="detail-tab-mount" class="detail-tab-content">
+        <div class="detail-section">
+          <div class="detail-section-title">挂载卷</div>
+          ${mountContent}
+        </div>
+      </div>
+
+      <div id="detail-tab-network" class="detail-tab-content">
+        <div class="detail-section">
+          <div class="detail-section-title">网络配置</div>
+          ${networkContent}
+        </div>
+      </div>
+
+      <div id="detail-tab-port" class="detail-tab-content">
+        <div class="detail-section">
+          <div class="detail-section-title">端口映射</div>
+          ${portContent}
+        </div>
+      </div>
+
+      <div id="detail-tab-log" class="detail-tab-content">
+        <div class="detail-section">
+          <div class="detail-section-title">最新日志（最近20行）</div>
+          ${logContent}
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="openLogModal('${currentDetailCid}','${document.getElementById('detail-modal-title').textContent.replace('容器详情 · ', '')}')">查看完整日志</button>
+        </div>
+      </div>
+
+      <div id="detail-tab-terminal" class="detail-tab-content">
+        <div class="detail-section">
+          <div class="detail-section-title">Web 终端</div>
+          <p style="color:var(--text2);font-size:12px;margin-bottom:12px">
+            在容器内部执行命令。支持常用 Linux 命令，如 ls、ps、env、cat 等。
+          </p>
+          <button class="btn btn-primary" onclick="openTerminalFromDetail()">
+            打开终端
+          </button>
+        </div>
+      </div>
+    `;
+
+  } catch(e) {
+    content.innerHTML = `<div class="detail-error">加载失败：${e.message}</div>`;
+  }
+}
+
+function switchDetailTab(tab) {
+  currentDetailTab = tab;
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.detail-tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.detail-tab[onclick="switchDetailTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`detail-tab-${tab}`).classList.add('active');
+}
+
+function refreshDetail() {
+  loadContainerDetail();
+}
+
+function closeDetailModal() {
+  closeModal('detail-modal');
+}
+
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ══════════════════════════════════════════════════════
+//  Web 终端（新增）
+// ══════════════════════════════════════════════════════
+let currentTerminalCid = '';
+let terminalHistory = [];
+let historyIndex = -1;
+
+function openTerminalModal(cid, name) {
+  currentTerminalCid = cid;
+  terminalHistory = [];
+  historyIndex = -1;
+  
+  document.getElementById('terminal-title').textContent = `· ${name}`;
+  document.getElementById('terminal-output').innerHTML = '';
+  document.getElementById('terminal-input').value = '';
+  document.getElementById('terminal-modal').classList.add('show');
+  document.getElementById('terminal-info').textContent = '正在连接容器...';
+  
+  // 获取 shell 信息
+  loadTerminalShell();
+}
+
+async function loadTerminalShell() {
+  try {
+    const result = await api('GET', `/api/terminal/shell/${currentTerminalCid}`);
+    if (result.error) {
+      document.getElementById('terminal-info').textContent = `连接失败: ${result.error}`;
+      return;
+    }
+    document.getElementById('terminal-info').textContent = 
+      `容器: ${result.container_name} (${result.container_id}) | Shell: ${result.shell}`;
+    appendTerminalOutput(`Connected to container shell (${result.shell})\n`, 'info');
+    appendTerminalOutput('Type commands and press Enter to execute.\n', 'info');
+    appendTerminalOutput('='.repeat(50) + '\n', 'info');
+    
+    // 设置焦点
+    document.getElementById('terminal-input').focus();
+  } catch(e) {
+    document.getElementById('terminal-info').textContent = `连接失败: ${e.message}`;
+  }
+}
+
+function openTerminalFromDetail() {
+  const name = document.getElementById('detail-modal-title').textContent.replace('容器详情 · ', '');
+  closeDetailModal();
+  setTimeout(() => {
+    openTerminalModal(currentDetailCid, name);
+  }, 100);
+}
+
+function appendTerminalOutput(text, type = 'normal') {
+  const output = document.getElementById('terminal-output');
+  const span = document.createElement('span');
+  span.style.whiteSpace = 'pre-wrap';
+  span.style.wordBreak = 'break-all';
+  
+  if (type === 'error') {
+    span.style.color = 'var(--red)';
+  } else if (type === 'success') {
+    span.style.color = 'var(--green)';
+  } else if (type === 'info') {
+    span.style.color = 'var(--text2)';
+  } else {
+    span.style.color = 'var(--text)';
+  }
+  
+  span.textContent = text;
+  output.appendChild(span);
+  
+  // 滚动到底部
+  output.scrollTop = output.scrollHeight;
+}
+
+async function handleTerminalInput(event) {
+  if (event.key !== 'Enter') {
+    // 处理历史命令
+    if (event.key === 'ArrowUp') {
+      if (historyIndex < terminalHistory.length - 1) {
+        historyIndex++;
+        document.getElementById('terminal-input').value = terminalHistory[terminalHistory.length - 1 - historyIndex];
+      }
+      event.preventDefault();
+    } else if (event.key === 'ArrowDown') {
+      if (historyIndex > 0) {
+        historyIndex--;
+        document.getElementById('terminal-input').value = terminalHistory[terminalHistory.length - 1 - historyIndex];
+      } else {
+        historyIndex = -1;
+        document.getElementById('terminal-input').value = '';
+      }
+      event.preventDefault();
+    }
+    return;
+  }
+  
+  const input = document.getElementById('terminal-input');
+  const cmd = input.value.trim();
+  input.value = '';
+  
+  if (!cmd) return;
+  
+  // 添加到历史
+  if (terminalHistory[terminalHistory.length - 1] !== cmd) {
+    terminalHistory.push(cmd);
+  }
+  historyIndex = -1;
+  
+  // 显示命令
+  appendTerminalOutput(`$ ${cmd}\n`, 'success');
+  
+  // 执行命令
+  try {
+    const result = await api('POST', `/api/terminal/exec/${currentTerminalCid}`, { cmd });
+    if (result.error) {
+      appendTerminalOutput(`Error: ${result.error}\n`, 'error');
+    } else {
+      if (result.stdout) {
+        appendTerminalOutput(result.stdout);
+      }
+      if (result.stderr) {
+        appendTerminalOutput(result.stderr, 'error');
+      }
+    }
+  } catch(e) {
+    appendTerminalOutput(`Error: ${e.message}\n`, 'error');
+  }
+  
+  appendTerminalOutput('\n', 'normal');
+}
+
+function clearTerminal() {
+  document.getElementById('terminal-output').innerHTML = '';
+}
+
+function closeTerminalModal() {
+  currentTerminalCid = '';
+  closeModal('terminal-modal');
 }
 
 // ══════════════════════════════════════════════════════
@@ -1146,10 +1902,10 @@ function startDeployStream(taskId) {
     if (['done','failed'].includes(t.status)) {
       clearInterval(progressInterval);
       if (t.status === 'done') {
-        toast('🎉 部署成功！', 'success');
+        toast('部署成功！', 'success');
         setDeployPhase('done', 100);
       } else {
-        toast('❌ 部署失败', 'error');
+        toast('部署失败', 'error');
         setDeployPhase('failed', 0);
         if (t.error_summary && t.error_summary.length) {
           document.getElementById('deploy-error-card').style.display = 'block';
@@ -1164,10 +1920,10 @@ async function pollTaskStatus(taskId) {
   const t = await api('GET', `/api/task/${taskId}`);
   setDeployPhase(t.phase, t.pull_progress || 0);
   if (t.status === 'done') {
-    toast('🎉 部署成功！', 'success');
+    toast('部署成功！', 'success');
     setDeployPhase('done', 100);
   } else if (t.status === 'failed') {
-    toast('❌ 部署失败', 'error');
+    toast('部署失败', 'error');
     setDeployPhase('failed', 0);
     if (t.error_summary && t.error_summary.length) {
       document.getElementById('deploy-error-card').style.display = 'block';
@@ -1184,8 +1940,8 @@ function setDeployPhase(phase, pct) {
     pending: ['等待中', 'badge-gray', '#888'],
     pulling: ['拉取镜像', 'badge-blue', 'linear-gradient(90deg,#2563eb,#7c3aed)'],
     starting: ['启动服务', 'badge-blue', 'linear-gradient(90deg,#059669,#2563eb)'],
-    done: ['✅ 完成', 'badge-green', 'var(--green)'],
-    failed: ['❌ 失败', 'badge-red', 'var(--red)'],
+    done: ['完成', 'badge-green', 'var(--green)'],
+    failed: ['失败', 'badge-red', 'var(--red)'],
   };
   const [label, cls, color] = phases[phase] || phases.pending;
   badge.textContent = label;
@@ -1207,10 +1963,301 @@ async function validateCompose() {
   const compose = document.getElementById('compose-input').value.trim();
   if (!compose) { toast('请输入 compose 内容', 'error'); return; }
   if (compose.includes('services:')) {
-    toast('✅ 格式看起来正确', 'success');
+    toast('格式正确', 'success');
   } else {
-    toast('⚠️ 未检测到 services 字段', 'error');
+    toast('未检测到 services 字段', 'error');
   }
+}
+
+// ══════════════════════════════════════════════════════
+//  Compose 可视化编辑器（新增）
+// ══════════════════════════════════════════════════════
+let visualServices = [];
+let editorMode = 'yaml'; // 'yaml' or 'visual'
+
+function toggleEditorMode() {
+  const yamlEditor = document.getElementById('compose-yaml-editor');
+  const visualEditor = document.getElementById('compose-visual-editor');
+  const modeBtn = document.getElementById('editor-mode-btn');
+  
+  if (editorMode === 'yaml') {
+    // 切换到可视化模式
+    editorMode = 'visual';
+    yamlEditor.style.display = 'none';
+    visualEditor.style.display = 'block';
+    modeBtn.textContent = '可视化编辑';
+    loadYamlToVisual();
+  } else {
+    // 切换到 YAML 模式
+    editorMode = 'yaml';
+    yamlEditor.style.display = 'block';
+    visualEditor.style.display = 'none';
+    modeBtn.textContent = 'YAML 编辑';
+    // 同步回 YAML
+    syncVisualToYaml();
+  }
+}
+
+function loadYamlToVisual() {
+  const yaml = document.getElementById('compose-input').value;
+  visualServices = parseYamlToServices(yaml);
+  renderVisualServices();
+  updateComposePreview();
+}
+
+function parseYamlToServices(yaml) {
+  const services = [];
+  const lines = yaml.split('\n');
+  let currentService = null;
+  let currentSection = null;
+  let indent = 0;
+  
+  for (let line of lines) {
+    // 跳过注释和空行
+    if (line.trim().startsWith('#') || !line.trim()) continue;
+    
+    const trimmed = line.trim();
+    const lineIndent = line.length - line.replace(/^\s*/, '').length;
+    
+    // 检查是否是新服务的开始
+    if (trimmed.startsWith('services:')) continue;
+    
+    // 服务名 (2个空格缩进)
+    if (lineIndent === 2 && !trimmed.includes(':')) {
+      if (currentService) services.push(currentService);
+      currentService = {
+        name: trimmed.replace(':', ''),
+        image: '',
+        ports: [],
+        volumes: [],
+        environment: [],
+        restart: 'no',
+        labels: {}
+      };
+      currentSection = null;
+      continue;
+    }
+    
+    if (!currentService) continue;
+    
+    // 检查顶层属性
+    if (lineIndent === 4) {
+      if (trimmed.startsWith('image:')) {
+        currentService.image = trimmed.replace('image:', '').trim();
+      } else if (trimmed.startsWith('container_name:')) {
+        currentService.container_name = trimmed.replace('container_name:', '').trim();
+      } else if (trimmed.startsWith('restart:')) {
+        currentService.restart = trimmed.replace('restart:', '').trim();
+      } else if (trimmed.startsWith('ports:')) {
+        currentSection = 'ports';
+        currentService.ports = [];
+      } else if (trimmed.startsWith('volumes:')) {
+        currentSection = 'volumes';
+        currentService.volumes = [];
+      } else if (trimmed.startsWith('environment:')) {
+        currentSection = 'environment';
+        currentService.environment = [];
+      } else if (trimmed.startsWith('labels:')) {
+        currentSection = 'labels';
+        currentService.labels = {};
+      } else {
+        currentSection = null;
+      }
+    } else if (lineIndent === 6 && currentSection) {
+      const value = trimmed.replace(/^-\s*/, '').replace(/^["']|["']$/g, '');
+      
+      if (currentSection === 'ports') {
+        currentService.ports.push(value);
+      } else if (currentSection === 'volumes') {
+        currentService.volumes.push(value);
+      } else if (currentSection === 'environment') {
+        if (value.includes(':')) {
+          const [key, ...rest] = value.split(':');
+          currentService.environment.push({ key: key.trim(), value: rest.join(':').trim() });
+        } else {
+          currentService.environment.push({ key: value, value: '' });
+        }
+      } else if (currentSection === 'labels') {
+        const [key, ...rest] = value.split(':');
+        if (key && rest.length) {
+          currentService.labels[key.trim()] = rest.join(':').trim();
+        }
+      }
+    }
+  }
+  
+  if (currentService) services.push(currentService);
+  return services;
+}
+
+function renderVisualServices() {
+  const container = document.getElementById('visual-services-list');
+  
+  if (visualServices.length === 0) {
+    container.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:20px;text-align:center">暂无服务，点击下方按钮添加</div>';
+    return;
+  }
+  
+  container.innerHTML = visualServices.map((svc, idx) => `
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:12px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <input type="text" class="input" value="${svc.name}" placeholder="服务名称" 
+               style="flex:1;font-weight:600" onchange="updateService(${idx}, 'name', this.value)">
+        <button class="btn btn-danger btn-sm" onclick="removeService(${idx})" style="margin-left:8px">删除</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label style="font-size:11px;color:var(--text2)">镜像</label>
+          <input type="text" class="input" value="${svc.image || ''}" placeholder="nginx:latest"
+                 onchange="updateService(${idx}, 'image', this.value)">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text2)">重启策略</label>
+          <select class="filter-select" style="width:100%" onchange="updateService(${idx}, 'restart', this.value)">
+            <option value="no" ${svc.restart === 'no' ? 'selected' : ''}>不重启</option>
+            <option value="always" ${svc.restart === 'always' ? 'selected' : ''}>总是重启</option>
+            <option value="on-failure" ${svc.restart === 'on-failure' ? 'selected' : ''}>失败时重启</option>
+            <option value="unless-stopped" ${svc.restart === 'unless-stopped' ? 'selected' : ''}>除非停止</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <label style="font-size:11px;color:var(--text2)">端口映射 (宿主机:容器)</label>
+        <div id="ports-${idx}" style="display:flex;flex-direction:column;gap:4px">
+          ${svc.ports.map((p, pi) => `
+            <div style="display:flex;gap:4px">
+              <input type="text" class="input" value="${p}" style="flex:1;font-family:monospace;font-size:12px"
+                     onchange="updateServicePort(${idx}, ${pi}, this.value)">
+              <button class="btn btn-ghost btn-sm" onclick="removeServiceItem(${idx}, 'ports', ${pi})">X</button>
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addServiceItem(${idx}, 'ports')" style="margin-top:4px">+ 添加端口</button>
+      </div>
+      <div style="margin-top:8px">
+        <label style="font-size:11px;color:var(--text2)">挂载卷 (源:目标)</label>
+        <div id="volumes-${idx}" style="display:flex;flex-direction:column;gap:4px">
+          ${svc.volumes.map((v, vi) => `
+            <div style="display:flex;gap:4px">
+              <input type="text" class="input" value="${v}" style="flex:1;font-family:monospace;font-size:12px"
+                     onchange="updateServiceVolume(${idx}, ${vi}, this.value)">
+              <button class="btn btn-ghost btn-sm" onclick="removeServiceItem(${idx}, 'volumes', ${vi})">X</button>
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addServiceItem(${idx}, 'volumes')" style="margin-top:4px">+ 添加挂载</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateService(idx, field, value) {
+  visualServices[idx][field] = value;
+  updateComposePreview();
+}
+
+function updateServicePort(idx, portIdx, value) {
+  visualServices[idx].ports[portIdx] = value;
+  updateComposePreview();
+}
+
+function updateServiceVolume(idx, volIdx, value) {
+  visualServices[idx].volumes[volIdx] = value;
+  updateComposePreview();
+}
+
+function removeServiceItem(idx, field, itemIdx) {
+  visualServices[idx][field].splice(itemIdx, 1);
+  renderVisualServices();
+  updateComposePreview();
+}
+
+function addServiceItem(idx, field) {
+  if (field === 'ports') {
+    visualServices[idx].ports.push('8080:80');
+  } else if (field === 'volumes') {
+    visualServices[idx].volumes.push('/path/to/data:/app/data');
+  }
+  renderVisualServices();
+  updateComposePreview();
+}
+
+function addVisualService() {
+  visualServices.push({
+    name: `service-${visualServices.length + 1}`,
+    image: '',
+    ports: [],
+    volumes: [],
+    environment: [],
+    restart: 'no'
+  });
+  renderVisualServices();
+  updateComposePreview();
+}
+
+function removeService(idx) {
+  if (!confirm('确定要删除此服务吗？')) return;
+  visualServices.splice(idx, 1);
+  renderVisualServices();
+  updateComposePreview();
+}
+
+function updateComposePreview() {
+  const project = document.getElementById('project-name').value.trim() || 'myapp';
+  const yaml = servicesToYaml(project, visualServices);
+  document.getElementById('compose-preview').value = yaml;
+}
+
+function servicesToYaml(project, services) {
+  if (services.length === 0) return '';
+  
+  let yaml = `version: '3'\nservices:\n`;
+  
+  for (const svc of services) {
+    if (!svc.name) continue;
+    yaml += `  ${svc.name}:\n`;
+    if (svc.image) yaml += `    image: ${svc.image}\n`;
+    if (svc.container_name) yaml += `    container_name: ${svc.container_name}\n`;
+    yaml += `    restart: ${svc.restart || 'no'}\n`;
+    
+    for (const port of svc.ports) {
+      if (port) yaml += `    ports:\n      - "${port}"\n`;
+    }
+    
+    for (const vol of svc.volumes) {
+      if (vol) yaml += `    volumes:\n      - "${vol}"\n`;
+    }
+    
+    for (const env of svc.environment) {
+      if (env.key) {
+        if (env.value) yaml += `    environment:\n      - "${env.key}:${env.value}"\n`;
+        else yaml += `    environment:\n      - "${env.key}"\n`;
+      }
+    }
+    
+    yaml += '\n';
+  }
+  
+  return yaml;
+}
+
+function syncVisualToYaml() {
+  const yaml = document.getElementById('compose-preview').value;
+  document.getElementById('compose-input').value = yaml;
+}
+
+function deployFromVisual() {
+  syncVisualToYaml();
+  doDeploy();
+}
+
+function copyVisualYaml() {
+  const yaml = document.getElementById('compose-preview').value;
+  navigator.clipboard.writeText(yaml).then(() => {
+    toast('YAML 已复制到剪贴板', 'success');
+  }).catch(() => {
+    toast('复制失败', 'error');
+  });
 }
 
 // ── Compose 持久化（P2-4）
@@ -1245,8 +2292,8 @@ async function loadSavedList() {
       <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
         <div style="flex:1;font-family:monospace;font-size:13px;font-weight:600">${s.name}</div>
         <div style="font-size:11px;color:var(--text2)">${formatTime(s.updated || s.created)}</div>
-        <button class="btn btn-ghost btn-sm" onclick="loadSavedCompose('${s.name}')">📂 加载</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteSavedCompose('${s.name}')">🗑</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadSavedCompose('${s.name}')"> 加载</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSavedCompose('${s.name}')"></button>
       </div>
     `).join('');
   } catch(e) {}
@@ -1304,13 +2351,13 @@ function filterApps() {
 
 function renderApps(list) {
   const catEmojis = {
-    '媒体':'🎬','下载':'⬇️','文件':'📁','运维':'🔧','监控':'📊','数据库':'🗄️',
-    '开发':'💻','网络':'🌐','智能家居':'🏠','协作':'🤝','AI':'🤖','工具':'🛠️'
+    '媒体':'','下载':'⬇️','文件':'','运维':'','监控':'','数据库':'️',
+    '开发':'','网络':'','智能家居':'','协作':'','AI':'','工具':'️'
   };
   document.getElementById('apps-grid').innerHTML = list.map(app => `
     <div class="app-card" onclick="deployApp('${app.name}')">
       <button class="app-deploy-btn btn btn-primary btn-sm">一键部署</button>
-      <div class="app-icon">${catEmojis[app.category] || '📦'}</div>
+      <div class="app-icon">${catEmojis[app.category] || ''}</div>
       <div class="app-name">${app.name}</div>
       <div class="app-desc">${app.desc}</div>
       <div style="margin-top:8px"><span class="tag">${app.category}</span></div>
@@ -1333,7 +2380,7 @@ async function deployApp(name) {
           t.classList.add('active');
         }
       });
-      toast(`✅ 已加载 ${name} 模板，确认后点击部署`, 'success');
+      toast(`已加载 ${name} 模板，确认后点击部署`, 'success');
     }
   } catch(e) {
     toast('加载模板失败', 'error');
@@ -1357,8 +2404,8 @@ async function loadHistory() {
         <div class="hist-time">${formatTime(h.time)}</div>
         <div class="hist-project">${h.project || '-'}</div>
         <div>${h.status === 'done'
-          ? '<span class="badge badge-green">✅ 成功</span>'
-          : '<span class="badge badge-red">❌ 失败</span>'}</div>
+          ? '<span class="badge badge-green">成功</span>'
+          : '<span class="badge badge-red">失败</span>'}</div>
         ${h.error ? `<div style="font-size:11px;color:var(--red);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.error}</div>` : ''}
       </div>
     `).join('');
@@ -1411,21 +2458,21 @@ function renderImages() {
     if (!cache) {
       statusCell = `<span style="color:var(--text2);font-size:12px">—</span>`;
     } else if (cache.checking) {
-      statusCell = `<span style="color:var(--text2);font-size:12px">⏳ 检查中...</span>`;
+      statusCell = `<span style="color:var(--text2);font-size:12px">检查中...</span>`;
     } else if (cache.has_update === true) {
       statusCell = `<span class="badge badge-orange"><span class="img-update-dot"></span>有更新</span>`;
     } else if (cache.has_update === null) {
       statusCell = `<span class="badge badge-yellow" title="${cache.message}">可能有更新</span>`;
     } else if (cache.has_update === false) {
-      statusCell = `<span class="badge badge-green">✓ 最新</span>`;
+      statusCell = `<span class="badge badge-green">最新</span>`;
     } else if (cache.error) {
       statusCell = `<span class="badge badge-gray" title="${cache.error}">检查失败</span>`;
     }
 
     const canUpdate = cache && (cache.has_update === true || cache.has_update === null);
     const updateBtn = canUpdate
-      ? `<button class="btn btn-sm btn-sm" style="background:var(--yellow);color:#000" onclick="doUpdateImage('${img.name.replace(/'/g,"\\'")}', false)">⬆️ 更新</button>`
-      : `<button class="btn btn-ghost btn-sm" onclick="checkSingleImageUpdate('${img.name.replace(/'/g,"\\'")}')">🔍 检查</button>`;
+      ? `<button class="btn btn-sm btn-sm" style="background:var(--yellow);color:#000" onclick="doUpdateImage('${img.name.replace(/'/g,"\\'")}', false)">[更新]</button>`
+      : `<button class="btn btn-ghost btn-sm" onclick="checkSingleImageUpdate('${img.name.replace(/'/g,"\\'")}')">检查</button>`;
 
     return `<tr id="img-row-${img.id}">
       <td style="font-family:monospace;font-size:13px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${img.name}">${img.name}</td>
@@ -1516,7 +2563,7 @@ async function doUpdateImage(imageName, restartContainers = true, silent = false
     document.getElementById('update-modal').classList.add('show');
   }
 
-  appendUpdateLog(`▶ 开始拉取：${imageName}`);
+  appendUpdateLog(`>> 开始拉取：${imageName}`);
   appendUpdateLog('  连接远端仓库...');
 
   const endpoint = restartContainers ? '/api/images/pull-restart' : '/api/images/pull';
@@ -1530,7 +2577,7 @@ async function doUpdateImage(imageName, restartContainers = true, silent = false
       imageUpdateCache[imageName] = { has_update: false, message: '已更新至最新' };
       if (!silent) {
         const badge = document.getElementById('update-phase-badge');
-        badge.textContent = '✅ 更新成功';
+        badge.textContent = '更新成功';
         badge.className = 'phase-badge badge-green';
         const restarted = result.restarted || [];
         const resultCard = document.getElementById('update-result-card');
@@ -1538,7 +2585,7 @@ async function doUpdateImage(imageName, restartContainers = true, silent = false
         resultCard.style.background = '#0a2318';
         resultCard.style.border = '1px solid var(--green)';
         resultCard.style.color = 'var(--green)';
-        resultCard.innerHTML = `<b>✅ 镜像更新成功</b><br>
+        resultCard.innerHTML = `<b>镜像更新成功</b><br>
           ${restarted.length ? `已重启容器：${restarted.join(', ')}` : '（未找到使用此镜像的运行容器）'}`;
         toast(`${imageName} 更新成功`, 'success');
       }
@@ -1548,20 +2595,20 @@ async function doUpdateImage(imageName, restartContainers = true, silent = false
     } else {
       if (!silent) {
         const badge = document.getElementById('update-phase-badge');
-        badge.textContent = '❌ 更新失败';
+        badge.textContent = '更新失败';
         badge.className = 'phase-badge badge-red';
         const resultCard = document.getElementById('update-result-card');
         resultCard.style.display = 'block';
         resultCard.style.background = '#1a0a0a';
         resultCard.style.border = '1px solid var(--red)';
         resultCard.style.color = 'var(--red)';
-        resultCard.innerHTML = `<b>❌ 更新失败</b><br>${result.output || '未知错误'}`;
+        resultCard.innerHTML = `<b>更新失败</b><br>${result.output || '未知错误'}`;
         toast(`${imageName} 更新失败`, 'error');
       }
     }
   } catch(e) {
     if (!silent) {
-      appendUpdateLog('❌ 网络错误：' + e.message);
+      appendUpdateLog('[错误] 网络错误：' + e.message);
       toast('更新失败：' + e.message, 'error');
     }
   }
@@ -1641,7 +2688,7 @@ function removeMirror(i) {
 
 async function saveMirrors() {
   const r = await api('POST', '/api/mirrors', { mirrors });
-  toast(r.ok ? '✅ 保存成功，Docker 正在重载' : (r.error || '保存失败'), r.ok ? 'success' : 'error');
+  toast(r.ok ? '保存成功，Docker 正在重载' : (r.error || '保存失败'), r.ok ? 'success' : 'error');
 }
 
 // ══════════════════════════════════════════════════════
@@ -1658,9 +2705,18 @@ document.querySelectorAll('.modal-overlay').forEach(el => {
 // ══════════════════════════════════════════════════════
 //  启动
 // ══════════════════════════════════════════════════════
-initTheme();
-checkAuth();
-autoLogin();
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  checkAuth();
+  autoLogin();
+});
+
+// 如果 DOM 早已加载完成（例如页面已缓存），则立即执行
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+  initTheme();
+  checkAuth();
+  autoLogin();
+}
 </script>
 </body>
 </html>
